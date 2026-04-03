@@ -1,0 +1,59 @@
+/* ── Tip transitions ── */
+
+/* shared base */
+.tip-anim {
+  transition: transform var(--transition-duration) var(--ease-back-in-out), opacity var(--transition-duration) var(--ease-back-in-out);
+}
+
+.tip-anim--dragging {
+  transition: none;
+}
+
+/* TOP: slide down enter, slide up exit */
+.tip-slide-down {
+  transform: translateY(-100%);
+  opacity: 0;
+
+  &.tip-visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* CENTER: scale enter/exit */
+.tip-scale {
+  transform: scale(0.6);
+  opacity: 0;
+
+  &.tip-visible {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* BOTTOM: slide up enter, slide down exit */
+.tip-slide-up {
+  transform: translateY(100%);
+  opacity: 0;
+
+  &.tip-visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Popup / TransitionGroup animations ── */
+.rise-reverse-enter-active,
+.rise-reverse-exit-active {
+  transition: transform var(--transition-duration) var(--ease-back-in-out), opacity var(--transition-duration) var(--ease-back-in-out);
+}
+
+.rise-reverse-enter {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.rise-reverse-exit-to {
+  transform: translateY(100%);
+  opacity: 0;
+}

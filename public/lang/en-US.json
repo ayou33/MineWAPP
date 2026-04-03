@@ -1,0 +1,34 @@
+{
+  "app": {
+    "title": "MineAPP",
+    "description": "A modern web application template powered by SolidJS, Vite, and TailwindCSS."
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About"
+  },
+  "about": {
+    "description": "This is a template project built on top of a battle-tested architecture. It includes scoped page lifecycle, i18n, toast/popup systems, keepAlive routing, and more."
+  },
+  "demo": {
+    "show_toast": "Show Toast",
+    "toast_message": "Hello from MineAPP!"
+  },
+  "auth": {
+    "title": "Sign In",
+    "username": "Username",
+    "password": "Password",
+    "login": "Log In",
+    "empty_fields": "Please enter username and password",
+    "login_success": "Login successful",
+    "login_failed": "Login failed, please try again"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "empty": "No data"
+  }
+}

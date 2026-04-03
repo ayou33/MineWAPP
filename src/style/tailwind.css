@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-secondary: var(--theme-secondary);
+  --color-theme-accent: var(--theme-accent);
+
+  --color-black: #201F29;
+  --color-gray: #585666;
+  --color-gray-light: #9494A4;
+  --color-gray-lighter: #B1B1CC;
+  --color-bg: #FAF9FF;
+  --color-blue: #2E60F9;
+  --color-blue-darker: #1C4CDD;
+  --color-blue-lighter: #517BFF;
+  --color-blue-2lighter: #7098F8;
+  --color-blue-3lighter: #E2EAFE;
+  --color-green: #00C58A;
+  --color-green-darker: #15AB67;
+  --color-orange: #FF9100;
+  --color-orange-lighter: #FFAD00;
+  --color-red: #F64D4B;
+  --color-red-darker: #D52A27;
+  --color-red-lighter: #F98281;
+  --color-purple: #9600D2;
+  --color-purple-lighter: #BA2AF3;
+
+  /* z-index */
+  --z-under: -1;
+  --z-focus: 1;
+  --z-popup: 2;
+  --z-toast: 3;
+  --z-system: 4;
+
+  /* Flex */
+  --flex-2: 2 2 0%;
+  --flex-3: 3 3 0%;
+
+  /* Font size */
+  --font-size-sm: 0.8125rem;
+  --font-size-2sm: 0.75rem;
+  --font-size-xs: 0.625rem;
+
+  /* Width */
+  --width-dialog: 95vw;
+
+  /* Height */
+  --height-dialog: 80vh;
+
+  /* Max height */
+  --max-height-dialog: 80vh;
+}
+
+/* Custom component utilities */
+@utility shadow-primary-* {
+  --text-primary-color: --value(--color-*);
+}
+
+@utility shadow-color-* {
+  --text-shadow-color: --value(--color-*);
+}
