@@ -30,9 +30,7 @@ import './style/tailwind.css'
 
 function Root () {
   return (
-    <ErrorBoundary
-      fallback={(err, reset) => <Fallback error={err} reset={reset} />}
-    >
+    <ErrorBoundary fallback={(err, reset) => <Fallback error={err} reset={reset} />}>
       <KeepAliveProvider>
         <Suspense fallback={<PageLoading />}>
           <Routes />

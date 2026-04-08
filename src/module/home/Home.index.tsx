@@ -1,9 +1,11 @@
+import Icon from '@/components/Icon'
 import { t } from '@/features/i18n'
 import { A } from '@/router'
-
+import Wifi from 'lucide/wifi'
+  
 export default function Home () {
   return (
-    <div class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white px-4">
+    <div class="flex flex-col items-center justify-center min-h-screen bg-linear-to-b from-blue to-white px-4">
       <h1 class="text-4xl font-bold text-theme-primary mb-4">
         {t('app.title')}
       </h1>
@@ -15,6 +17,8 @@ export default function Home () {
         <A href="/about" class="px-6 py-3 bg-theme-primary text-white rounded-lg shadow hover:opacity-90 transition">
           {t('nav.about')}
         </A>
+        <Icon name="wifi" size="2rem" />
+        <Wifi size={96} absoluteStrokeWidth />
       </div>
 
       <div class="mt-16 text-sm text-gray-400">

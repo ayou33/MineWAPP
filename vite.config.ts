@@ -3,6 +3,7 @@ import solidPlugin from 'vite-plugin-solid'
 import tailwindcss from '@tailwindcss/vite'
 import generouted from '@generouted/solid-router/plugin'
 import path from 'path'
+// @ts-ignore
 import eslint from 'vite-plugin-eslint'
 
 export default defineConfig(({ mode }) => {
@@ -15,11 +16,7 @@ export default defineConfig(({ mode }) => {
   return {
     envDir: './env',
     plugins: [
-      solidPlugin({
-        typescript: {
-          onlyRemoveTypeImports: true,
-        },
-      }),
+      solidPlugin(),
       tailwindcss(),
       generouted(),
       eslint(),
@@ -28,6 +25,7 @@ export default defineConfig(({ mode }) => {
       alias: [
         { find: '@', replacement: path.resolve(__dirname, './src') },
         { find: /^lunzi/, replacement: path.resolve(__dirname, './lunzi') },
+        { find: /lucide\/(.+)/, replacement: 'lucide-solid/icons/$1' },
       ],
     },
     server: {

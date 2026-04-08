@@ -8,6 +8,6 @@ import { ParentProps } from 'solid-js'
 
 export default function SkeletonBar (props: InheritProps<ParentProps>) {
   return (
-    <div class={classNames('h-4 rounded animate-slash', props.class)}>{props.children}</div>
+    <div class={classNames('bg-gray/30 h-4 rounded animate-slash', props.class)}>{props.children}</div>
   )
 }

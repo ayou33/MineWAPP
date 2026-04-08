@@ -27,6 +27,7 @@ export enum AUTH_SCOPE {
 
 export const SESSION_KEYS = {
   SYSTEM_NOTICE: '__session_system_notice_',
+  DEACTIVATED_FROM: '__session_deactivated_from_',
 }
 
 export const LOCAL_SYS_KEYS = {

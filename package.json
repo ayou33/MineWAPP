@@ -41,6 +41,7 @@
     "classnames": "^2.5.1",
     "copy-to-clipboard": "^3.3.3",
     "lodash.throttle": "^4.1.1",
+    "lucide-solid": "^1.7.0",
     "ramda": "^0.32.0",
     "solid-js": "^1.9.12",
     "solid-transition-group": "^0.3.0"

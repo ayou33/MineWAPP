@@ -12,11 +12,14 @@
     "noEmit": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
       "lunzi": ["lunzi/index"],
-      "lunzi/*": ["lunzi/*"]
+      "lunzi/*": ["lunzi/*"],
+      "lucide": ["node_modules/lucide-solid/dist/types/lucide-solid.d.ts"],
+      "lucide/*": ["node_modules/lucide-solid/dist/types/icons/*"]
     }
   },
   "include": [

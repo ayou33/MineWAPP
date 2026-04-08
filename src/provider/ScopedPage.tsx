@@ -5,7 +5,7 @@ import { AUTH_SCOPE } from '@/config'
 import useAuthenticate from '@/hooks/useAuthenticate'
 import useRequest from '@/hooks/useRequest'
 import useTimer from '@/hooks/useTimer'
-import { createContext, ErrorBoundary, FlowProps, onCleanup, ParentProps, ValidComponent } from 'solid-js'
+import { createContext, FlowProps, onCleanup, ParentProps, ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { popup as _popup, cancelPopups } from '@/components/popups/Popups'
 import { on, off, emit } from '@/common/event'
@@ -87,9 +87,7 @@ export default function ScopedPage (pageProps: FlowProps<{ scope?: AUTH_SCOPE },
   
   return (
     <PageContext.Provider value={props}>
-      <ErrorBoundary fallback={(err, reset) => <div onClick={reset}>Error: {err.toString()}</div>}>
-        <Dynamic component={pageProps.children} {...props} />
-      </ErrorBoundary>
+      <Dynamic component={pageProps.children} {...props} />
     </PageContext.Provider>
   )
 }
