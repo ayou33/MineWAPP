@@ -9,6 +9,7 @@ import { localGet, localSet } from 'lunzi'
 import { createSignal } from 'solid-js'
 
 export type AppUser = {
+  group: number
   userId: string | number
   token: string
   [key: string]: unknown
@@ -44,6 +45,7 @@ async function ready () {
 }
 
 const application = {
+  userGroup: () => user()?.group,
   locale,
   setLocale: updateLocale,
   user,
