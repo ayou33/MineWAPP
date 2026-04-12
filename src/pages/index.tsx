@@ -1,4 +1,4 @@
-import ScopedPage from '@/provider/ScopedPage'
+import ScopedPage from '@/provider/scopedPage/ScopedPage'
 import { AUTH_SCOPE } from '@/config'
 import Home from '@/module/home/Home.index'
 

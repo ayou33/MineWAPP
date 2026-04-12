@@ -4,7 +4,7 @@
  * Date: 2024/4/28 15:13
  */
 import { on, emit } from '@/common/event'
-import { PageContext, ScopedPageProps } from '@/provider/ScopedPage'
+import { PageContext, ScopedPageProps } from '@/provider/scopedPage/ScopedPage'
 import { popup } from '@/components/popups/Popups'
 import { toast } from '@/components/tips/Tips'
 import useRequest from '@/hooks/useRequest'
