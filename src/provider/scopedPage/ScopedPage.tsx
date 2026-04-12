@@ -5,7 +5,7 @@ import { AUTH_SCOPE } from '@/config'
 import PageGuard from '@/provider/scopedPage/PageGuard'
 import useRequest from '@/hooks/useRequest'
 import useTimer from '@/hooks/useTimer'
-import { createContext, FlowProps, onCleanup, ParentProps, ValidComponent } from 'solid-js'
+import { createContext, FlowProps, onCleanup, ParentProps, Suspense, ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { popup as _popup, cancelPopups } from '@/components/popups/Popups'
 import { on, off, emit } from '@/common/event'
@@ -86,7 +86,15 @@ export default function ScopedPage (pageProps: FlowProps<{ scope?: AUTH_SCOPE, p
   return (
     <PageContext.Provider value={props}>
       <PageGuard scope={pageProps.scope}>
-        <Dynamic component={pageProps.children} {...props} />
+        {/*
+          Local Suspense boundary: catches any lazy-component loads (icons, async
+          chunks) that occur *within* a page without re-triggering the global
+          <PageLoading /> in index.tsx. fallback={null} means the partially-rendered
+          page content stays visible while sub-resources finish loading.
+        */}
+        <Suspense fallback={null}>
+          <Dynamic component={pageProps.children} {...props} />
+        </Suspense>
       </PageGuard>
     </PageContext.Provider>
   )
