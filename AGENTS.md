@@ -71,13 +71,34 @@ export const fetchFoo = get<FooData, FooParams>('/api/foo/data')
 export const submitBar = post<Result, BarParams>('/api/bar/submit')
 ```
 
-## ScopedPage (`src/provider/ScopedPage.tsx`)
+## ScopedPage (`src/provider/scopedPage/ScopedPage.tsx`)
 Wraps every page. Auto-cancels in-flight requests, toasts, and popups on unmount. Namespaces events to the page lifecycle.
+
+```tsx
+// src/pages/foo.tsx
+export default function FooPage () {
+  return <ScopedPage scope={AUTH_SCOPE.PRIVATE} pageCode="foo">{Foo}</ScopedPage>
+}
+```
+
+Props:
+- `scope` — `AUTH_SCOPE` level (default: `PUBLIC`). Delegated to `PageGuard`.
+- `pageCode` — optional string tag for debugging/logging.
+- `children` — must be a `ValidComponent` function reference (not JSX).
+
+Context available inside the page component via `usePageContext()`:
 ```tsx
 const { request, toast, popup, interval, delay, on, emit } = usePageContext()
 const [fetchData, loading] = request(fetchFoo)
 ```
-`on`/`emit` inside a `ScopedPage` are scoped to that page instance.
+`on`/`emit` are namespaced per page instance — events do not leak across pages.
+
+### PageGuard (`src/provider/scopedPage/PageGuard.tsx`)
+Embedded inside `ScopedPage`. Handles route-level access control reactively:
+- **Unauthenticated + PRIVATE+** → redirects to `AUTH_PATH` (via `useNavigate`).
+- **Authenticated but below required scope (AUTHED+)** → renders inline 403 screen.
+
+Guard logic uses `application.role()` (a reactive signal) — re-evaluates on login/logout without a page reload.
 
 ## State Management (`src/store/index.ts`)
 ```ts
@@ -202,7 +223,7 @@ import { localGet, localSet, stateFetch, stateQueue, useEvent } from 'lunzi'
 
 ## Auth & Routing
 File-system routing via `@generouted/solid-router`. `src/pages/_app.tsx` wraps all routes.
-`ScopedPage` accepts a `scope` prop (`AUTH_SCOPE.PUBLIC | TRIAL | PRIVATE | ADMIN`) which redirects unauthenticated users.
+`ScopedPage` accepts a `scope` prop (`AUTH_SCOPE.PUBLIC | TRIAL | PRIVATE | ADMIN`) which delegates to `PageGuard` for auth enforcement. `AUTH_PATH` (from `@/config`) is the redirect target for unauthenticated access.
 
 ## Config Structure (`src/config/`)
 | File | Purpose |
@@ -221,7 +242,8 @@ File-system routing via `@generouted/solid-router`. `src/pages/_app.tsx` wraps a
 | `src/features/abTest/ABTest.tsx` | Group-based conditional rendering component |
 | `src/features/abTest/sample-feature.ts` | Feature enum, group/version config, compatibility helpers |
 | `src/store/index.ts` | Global store, `useSelector`, `createScopedActions` |
-| `src/provider/ScopedPage.tsx` | Page-scoped lifecycle + auto-cleanup |
+| `src/provider/scopedPage/ScopedPage.tsx` | Page-scoped lifecycle + auto-cleanup |
+| `src/provider/scopedPage/PageGuard.tsx` | Auth redirect + 403 screen for scoped pages |
 | `src/tools/request/index.ts` | `get`/`post` factories via `lunzi/stateFetch` |
 | `src/common/event.ts` | Global event bus via `lunzi/useEvent` |
 | `src/style/var.scss` | CSS custom properties (theme, timing, easing) |
