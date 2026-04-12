@@ -52,6 +52,171 @@
   --max-height-dialog: 80vh;
 }
 
+/* ── MD3 Semantic tokens → Tailwind utilities (resolved at runtime per theme) ── */
+@theme inline {
+  /* Page */
+  --color-c-bg:           var(--c-bg);
+  --color-c-text:         var(--c-text);
+  --color-c-text-muted:   var(--c-text-muted);
+  --color-c-text-subtle:  var(--c-text-subtle);
+  --color-c-text-disabled: var(--c-text-disabled);
+
+  /* Surface */
+  --color-c-surface:    var(--c-surface);
+  --color-c-surface-1:  var(--c-surface-1);
+  --color-c-surface-2:  var(--c-surface-2);
+  --color-c-surface-3:  var(--c-surface-3);
+  --color-c-on-surface: var(--c-on-surface);
+
+  /* Outline */
+  --color-c-outline:        var(--c-outline);
+  --color-c-outline-strong: var(--c-outline-strong);
+  --color-c-divider:        var(--c-divider);
+
+  /* MD3 roles (direct access) */
+  --color-md-primary:              var(--md-primary);
+  --color-md-on-primary:           var(--md-on-primary);
+  --color-md-primary-container:    var(--md-primary-container);
+  --color-md-on-primary-container: var(--md-on-primary-container);
+  --color-md-secondary:            var(--md-secondary);
+  --color-md-tertiary:             var(--md-tertiary);
+  --color-md-error:                var(--md-error);
+  --color-md-success:              var(--md-success);
+  --color-md-warning:              var(--md-warning);
+  --color-md-surface:              var(--md-surface);
+  --color-md-surface-variant:      var(--md-surface-variant);
+  --color-md-on-surface-variant:   var(--md-on-surface-variant);
+  --color-md-outline:              var(--md-outline);
+  --color-md-outline-variant:      var(--md-outline-variant);
+  --color-md-inverse-surface:      var(--md-inverse-surface);
+  --color-md-inverse-on-surface:   var(--md-inverse-on-surface);
+
+  /* Navigation */
+  --color-c-nav-text:           var(--c-nav-text);
+  --color-c-nav-text-active:    var(--c-nav-text-active);
+  --color-c-nav-item-active-bg: var(--c-nav-item-active-bg);
+
+  /* Sidebar */
+  --color-c-sidebar-bg:               var(--c-sidebar-bg);
+  --color-c-sidebar-item-hover:        var(--c-sidebar-item-hover);
+  --color-c-sidebar-item-active-bg:    var(--c-sidebar-item-active-bg);
+  --color-c-sidebar-item-active-text:  var(--c-sidebar-item-active-text);
+
+  /* Button */
+  --color-c-btn-filled-bg:       var(--c-btn-filled-bg);
+  --color-c-btn-filled-text:     var(--c-btn-filled-text);
+  --color-c-btn-filled-hover-bg: var(--c-btn-filled-hover-bg);
+  --color-c-btn-tonal-bg:        var(--c-btn-tonal-bg);
+  --color-c-btn-tonal-text:      var(--c-btn-tonal-text);
+  --color-c-btn-outline-border:  var(--c-btn-outline-border);
+  --color-c-btn-outline-text:    var(--c-btn-outline-text);
+  --color-c-btn-text-color:      var(--c-btn-text-color);
+  --color-c-btn-elevated-bg:     var(--c-btn-elevated-bg);
+  --color-c-btn-elevated-text:   var(--c-btn-elevated-text);
+  --color-c-btn-danger-bg:       var(--c-btn-danger-bg);
+  --color-c-btn-danger-text:     var(--c-btn-danger-text);
+  --color-c-btn-success-bg:      var(--c-btn-success-bg);
+  --color-c-btn-success-text:    var(--c-btn-success-text);
+  --color-c-btn-warning-bg:      var(--c-btn-warning-bg);
+  --color-c-btn-warning-text:    var(--c-btn-warning-text);
+  --color-c-btn-disabled-bg:     var(--c-btn-disabled-bg);
+  --color-c-btn-disabled-text:   var(--c-btn-disabled-text);
+
+  /* Form Input */
+  --color-c-input-bg:               var(--c-input-bg);
+  --color-c-input-bg-hover:          var(--c-input-bg-hover);
+  --color-c-input-text:              var(--c-input-text);
+  --color-c-input-placeholder:       var(--c-input-placeholder);
+  --color-c-input-label:             var(--c-input-label);
+  --color-c-input-label-focus:       var(--c-input-label-focus);
+  --color-c-input-label-error:       var(--c-input-label-error);
+  --color-c-input-indicator:         var(--c-input-indicator);
+  --color-c-input-indicator-focus:   var(--c-input-indicator-focus);
+  --color-c-input-indicator-error:   var(--c-input-indicator-error);
+  --color-c-input-icon:              var(--c-input-icon);
+  --color-c-input-error-text:        var(--c-input-error-text);
+  --color-c-input-success-text:      var(--c-input-success-text);
+  --color-c-input-disabled-bg:       var(--c-input-disabled-bg);
+  --color-c-input-disabled-text:     var(--c-input-disabled-text);
+  --color-c-input-outlined-bg:       var(--c-input-outlined-bg);
+  --color-c-input-outlined-border:   var(--c-input-outlined-border);
+
+  /* Dropdown */
+  --color-c-dropdown-bg:               var(--c-dropdown-bg);
+  --color-c-dropdown-border:           var(--c-dropdown-border);
+  --color-c-dropdown-item-hover:       var(--c-dropdown-item-hover);
+  --color-c-dropdown-item-active-bg:   var(--c-dropdown-item-active-bg);
+  --color-c-dropdown-item-active-text: var(--c-dropdown-item-active-text);
+
+  /* Dialog */
+  --color-c-dialog-bg:     var(--c-dialog-bg);
+  --color-c-dialog-border: var(--c-dialog-border);
+
+  /* Tooltip */
+  --color-c-tooltip-bg:   var(--c-tooltip-bg);
+  --color-c-tooltip-text: var(--c-tooltip-text);
+
+  /* Chip / Badge */
+  --color-c-chip-bg:            var(--c-chip-bg);
+  --color-c-chip-text:          var(--c-chip-text);
+  --color-c-chip-border:        var(--c-chip-border);
+  --color-c-chip-selected-bg:   var(--c-chip-selected-bg);
+  --color-c-chip-selected-text: var(--c-chip-selected-text);
+  --color-c-badge-bg:           var(--c-badge-bg);
+  --color-c-badge-text:         var(--c-badge-text);
+
+  /* Table */
+  --color-c-table-header-bg:       var(--c-table-header-bg);
+  --color-c-table-header-text:     var(--c-table-header-text);
+  --color-c-table-row-bg:          var(--c-table-row-bg);
+  --color-c-table-row-hover:       var(--c-table-row-hover);
+  --color-c-table-row-selected-bg: var(--c-table-row-selected-bg);
+  --color-c-table-border:          var(--c-table-border);
+
+  /* Menu */
+  --color-c-menu-bg:               var(--c-menu-bg);
+  --color-c-menu-item-hover:       var(--c-menu-item-hover);
+  --color-c-menu-item-active-bg:   var(--c-menu-item-active-bg);
+  --color-c-menu-item-active-text: var(--c-menu-item-active-text);
+  --color-c-menu-divider:          var(--c-menu-divider);
+
+  /* Tab */
+  --color-c-tab-indicator:     var(--c-tab-indicator);
+  --color-c-tab-text-active:   var(--c-tab-text-active);
+  --color-c-tab-text-inactive: var(--c-tab-text-inactive);
+
+  /* Switch / Checkbox */
+  --color-c-switch-track-on:     var(--c-switch-track-on);
+  --color-c-switch-track-off:    var(--c-switch-track-off);
+  --color-c-switch-thumb-on:     var(--c-switch-thumb-on);
+  --color-c-switch-thumb-off:    var(--c-switch-thumb-off);
+  --color-c-checkbox-checked:    var(--c-checkbox-checked);
+  --color-c-checkbox-unchecked:  var(--c-checkbox-unchecked);
+
+  /* Progress */
+  --color-c-progress-track:     var(--c-progress-track);
+  --color-c-progress-indicator: var(--c-progress-indicator);
+
+  /* Skeleton */
+  --color-c-skeleton-bg: var(--c-skeleton-bg);
+
+  /* Snackbar */
+  --color-c-snackbar-bg:     var(--c-snackbar-bg);
+  --color-c-snackbar-text:   var(--c-snackbar-text);
+  --color-c-snackbar-action: var(--c-snackbar-action);
+
+  /* Chart */
+  --color-c-chart-1:       var(--c-chart-1);
+  --color-c-chart-2:       var(--c-chart-2);
+  --color-c-chart-3:       var(--c-chart-3);
+  --color-c-chart-4:       var(--c-chart-4);
+  --color-c-chart-5:       var(--c-chart-5);
+  --color-c-chart-6:       var(--c-chart-6);
+  --color-c-chart-grid:    var(--c-chart-grid);
+  --color-c-chart-label:   var(--c-chart-label);
+  --color-c-chart-tooltip: var(--c-chart-tooltip);
+}
+
 /* Custom component utilities */
 @utility shadow-primary-* {
   --text-primary-color: --value(--color-*);
