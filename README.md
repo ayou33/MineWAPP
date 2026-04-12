@@ -8,16 +8,16 @@ Extracted from a production-grade mobile-first architecture, this template provi
 
 ```bash
 # Install dependencies
-yarn install
+pnpm install
 
 # Start dev server
-yarn dev
+pnpm dev
 
 # Build for production
-yarn build
+pnpm build
 
 # Build workers (after editing public/worker/*.js)
-yarn zip-worker
+pnpm zip-worker
 ```
 
 ## Architecture
@@ -158,12 +158,12 @@ File-system based routing via `@generouted/solid-router`:
 
 | Command | Description |
 |---|---|
-| `yarn dev` | Dev server with HMR |
-| `yarn build` | Production build |
-| `yarn zip-worker` | Minify Web Worker scripts |
-| `yarn lint` | Run ESLint |
-| `yarn lint:fix` | Auto-fix ESLint issues |
-| `yarn preview` | Preview production build |
+| `pnpm dev` | Dev server with HMR |
+| `pnpm build` | Production build |
+| `pnpm zip-worker` | Minify Web Worker scripts |
+| `pnpm lint` | Run ESLint |
+| `pnpm lint:fix` | Auto-fix ESLint issues |
+| `pnpm preview` | Preview production build |
 
 ## Tech Stack
 

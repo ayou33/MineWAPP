@@ -44,9 +44,9 @@ try {
   await subprocess
   logOk('Vite build complete.')
 
-  // 2. Execute yarn zip-worker
+  // 2. Execute pnpm zip-worker
   logStep(2, 3, 'Running zip-worker...')
-  await execa('yarn', ['zip-worker'], { stdio: 'inherit' })
+  await execa('pnpm', ['zip-worker'], { stdio: 'inherit' })
   logOk('zip-worker complete.')
 
   // 3. Execute deploy script

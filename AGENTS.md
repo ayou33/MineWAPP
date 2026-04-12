@@ -4,11 +4,11 @@ Minimal SolidJS + Vite + TailwindCSS web application template. File-system routi
 
 ## Commands
 ```bash
-yarn dev                  # Dev server at http://localhost:3000
-yarn build [test|prod]    # Production bundle (via tsx scripts/build.ts)
-yarn zip-worker           # Rebuild after editing public/worker/*.js
-yarn lint:fix             # Auto-fix ESLint issues
-yarn preview              # Preview built assets
+pnpm dev                  # Dev server at http://localhost:3000
+pnpm build [test|prod]    # Production bundle (via tsx scripts/build.ts)
+pnpm zip-worker           # Rebuild after editing public/worker/*.js
+pnpm lint:fix             # Auto-fix ESLint issues
+pnpm preview              # Preview built assets
 ```
 
 ## Architecture Blueprint
@@ -191,10 +191,10 @@ File-system routing via `@generouted/solid-router`. `src/pages/_app.tsx` wraps a
 - Functional components only. No class components.
 - `*.module.scss` for component-scoped styles.
 - Prefer small, focused changes over broad refactors.
-- Always verify build (`yarn build`) after structural changes.
+- Always verify build (`pnpm build`) after structural changes.
 
 ## High-Risk Areas (Be Conservative)
 - Auth / token / session lifecycle.
 - ScopedPage cleanup and request cancellation.
 - Animation timing — changes to `--transition-duration` or `--ease-back-in-out` affect tips, popups, and page transitions globally.
-- `lunzi/` submodule — run `yarn zip-worker` after any worker changes.
+- `lunzi/` submodule — run `pnpm zip-worker` after any worker changes.
