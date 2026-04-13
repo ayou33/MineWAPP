@@ -1,93 +1,176 @@
-# 杭州超赞 MCN 综合管理系统
+# MineAPP
 
-公司内部专用 MCN 综合管理系统，覆盖商务合同、招商商品、主播签约与直播排班等核心业务。  
-终端支持 **PC 管理后台** + **微信小程序**，钉钉 OA 全流程同步，仅限内网访问。
+A modern web application template built with **SolidJS**, **Vite**, **TailwindCSS**, and **TypeScript**.
 
----
+Extracted from a production-grade mobile-first architecture, this template provides battle-tested infrastructure while remaining clean and extensible.
 
-## 技术架构
+## Quick Start
 
-| 维度 | 说明 |
-|------|------|
-| 前端（PC） | Web 管理后台 |
-| 前端（移动） | 微信小程序 |
-| 后端 | RESTful API，对接钉钉 OA |
-| 数据库 | MySQL（内网自建） |
-| 访问限制 | 仅内网/办公环境可访问 |
+```bash
+# Install dependencies
+pnpm install
 
----
+# Start dev server
+pnpm dev
 
-## 功能模块
+# Build for production
+pnpm build
 
-### 一、系统基础 & 权限
+# Build workers (after editing public/worker/*.js)
+pnpm zip-worker
+```
 
-- **内网访问控制**：系统仅对内网开放，禁止外部直接访问
-- **双端数据同步**：PC 后台与微信小程序实时同步
-- **钉钉 OA 集成**：审批、通知等 OA 流程全面对接钉钉
-- **操作日志**：全业务环节强制记录，不可篡改
-- **权限控制**：合同创建人可编辑；管理员/直属主管可编辑；其他人仅查看
+## Architecture
 
----
+```
+src/
+├── app/              # Application singleton (auth, locale, state)
+├── common/           # Shared utilities (event bus, math, logging, etc.)
+├── components/       # Base UI components (Button, Spin, Image, tips, popups, loading)
+├── config/           # App configuration (constants, env detection, server URLs)
+├── directives/       # SolidJS directives (model - two-way binding)
+├── features/         # Feature modules
+│   ├── dateFormat    # Date formatting setup
+│   ├── i18n/         # Internationalization (@solid-primitives/i18n)
+│   ├── keepAlive/    # Route-level component caching (LRU)
+│   ├── loadMore/     # Infinite scroll / pagination hook
+│   └── pageTransition/ # Forward navigation animations
+├── hooks/            # Reusable hooks (useRequest, useTimer, useBoolean, etc.)
+├── pages/            # File-system routes (@generouted/solid-router)
+├── provider/         # Context providers
+│   ├── ScopedPage    # Page lifecycle: scoped requests, toasts, popups, timers
+│   ├── Touchable     # Cross-platform tap/hold handler
+│   ├── Scroller      # Infinite scroll container with scroll restoration
+│   └── Default       # Fallback content renderer
+├── store/            # SolidJS store with useSelector / createScopedActions
+├── style/            # Global styles (TailwindCSS, animations, CSS vars)
+└── tools/            # Request layer, mock system, utilities
+    ├── request/      # get/post factories, Web Worker HTTP, axios fallback
+    ├── mock/         # Mock API definitions for development
+    └── once.ts       # Reactive one-shot callback
 
-### 二、超赞商务合同管理（PC 后台）
+lunzi/                # Local utility library
+├── event             # Typed event emitter with namespaces & wildcards
+├── stateFetch        # Priority queue HTTP with cancellation & caching
+├── stateQueue        # Async task queue
+├── store             # Reactive store helpers
+└── ...               # localStorage/session wrappers, logging, etc.
 
-覆盖商务合同全生命周期，支持 BI 看板可视化。
+public/
+├── lang/             # i18n JSON dictionaries
+└── worker/           # Web Worker scripts (fetch.js)
+```
 
-| 子模块 | 功能说明 |
-|--------|----------|
-| 主合同管理 | 录入、修改、查询；涵盖产品名、品牌名、合同附件、合同金额、合作时间、对应商务等核心字段 |
-| 合作方管理 | 新增、编辑、查询合作方基础信息及合作历史 |
-| 后置合同管理 | 录入、修改、查询；含后置佣金、阶梯说明、后置原因等字段 |
-| 商务活动管理 | 创建、编辑、删除活动，记录活动全维度详情 |
-| 后置结算对账 | 自动生成对账数据，BI 看板可视化展示 |
+## Key Concepts
 
----
+### ScopedPage
 
-### 三、招商商务管理 · 商品管理（PC 后台）
+Every page should be wrapped in `ScopedPage`. It provides scoped lifecycle management — all requests, toasts, popups, and timers are automatically cancelled on page unmount.
 
-管理招商侧各类商品，统一关联超赞商务合同。
+```tsx
+import ScopedPage from '@/provider/ScopedPage'
+import { AUTH_SCOPE } from '@/config'
+import { usePageContext } from '@/hooks/usePageContext'
 
-| 商品类型 | 主要操作 |
-|----------|----------|
-| 纯用商品 | 新增、编辑、删除、查询 |
-| 付费商品 | 新增、编辑、删除、查询 |
-| 后置商品 | 新增、编辑、删除、查询 |
+export default function MyPage() {
+  const { request, toast, popup, interval, delay, on, emit } = usePageContext()
 
-统一字段：产品名字、品牌、线上/线下佣金、负责商务、产品链接，均关联超赞商务合同。
+  // request() wraps API calls with loading signal and auto-cancellation
+  const [fetchData, loading] = request(myApiCall)
 
----
+  return (
+    <ScopedPage scope={AUTH_SCOPE.PUBLIC}>
+      {/* page content */}
+    </ScopedPage>
+  )
+}
+```
 
-### 四、主播签约管理（PC 后台）
+### Request Layer
 
-涵盖主播全生命周期：签约 → 排班 → 解约归档。
+API calls are defined as typed factories. HTTP runs off-thread in a Web Worker with priority queue support.
 
-| 子模块 | 功能说明 |
-|--------|----------|
-| 主播信息管理 | 基本信息录入/编辑/查询，含分成方式配置与运营人员分配 |
-| KOC 主播排班 | 排班配置（绑定直播品牌/直播目的），支持直播提醒推送 |
-| 解约申请 | 搜索主播、填写解约原因及附件，提交后二次确认并发送通知 |
-| 审核状态追踪 | 展示申请编号、审核状态（待审核 / 已批准 / 已拒绝），实时更新 |
-| 解约归档 | 解约完成后归档，关联历史合同与分成记录，数据永久留存 |
+```ts
+// Define API
+import { get, post } from '@/tools/request'
+export const fetchUsers = get<User[]>('/api/users')
+export const createUser = post<User, CreateUserParams>('/api/users')
 
----
+// Use in page
+const { request } = usePageContext()
+const [doFetch, loading] = request(fetchUsers)
+const users = await doFetch()
+```
 
-### 五、微信小程序
+### State Management
 
-为品牌方与主播提供移动端轻量入口，数据与 PC 后台实时同步。
+```ts
+import { useSelector, createScopedActions } from '@/store'
 
-| 功能页 | 说明 |
-|--------|------|
-| 登录 | 账号/密码登录 |
-| 品牌方信息 | 查看/录入自己的合同及品牌信息 |
-| 主播排班 | 查看直播品牌、直播时间、直播目的，接收直播提醒 |
-| 消息中心 | 同步 PC 端消息通知 |
-| 个人信息 | 品牌方/主播基础信息查看（只读） |
+// Read (reactive)
+const userName = useSelector(s => s.user.name)
 
----
+// Define actions
+const userActions = createScopedActions('user', {
+  setName(set, name: string) { set('name', name) }
+})
 
-## 安全规范
+// Dispatch
+userActions.setName('Alice')
+```
 
-- 仅内网可访问，防 SQL 注入、XSS 攻击
-- 密码加密存储，操作日志不可篡改
-- 所有模块数据支持 Excel 导出，支持批量数据导入
+### i18n
 
+```ts
+import { t, te } from '@/features/i18n'
+t('app.title')                    // translated string
+t('greeting', { name: 'World' }) // with interpolation
+te('some.key')                    // existence check
+```
+
+### Routing
+
+File-system based routing via `@generouted/solid-router`:
+- `src/pages/index.tsx` → `/`
+- `src/pages/about.tsx` → `/about`
+- `src/pages/users/[id].tsx` → `/users/:id`
+- `src/pages/_app.tsx` → App wrapper (layout)
+
+## Adding a New Module
+
+1. Create page at `src/pages/my-feature.tsx`
+2. Define APIs in a `*.api.ts` file
+3. Add store slice in `src/store/index.ts` if needed
+4. Wrap page in `<ScopedPage>` for lifecycle management
+5. Add i18n keys to `public/lang/*.json`
+
+## Configuration
+
+| File | Purpose |
+|---|---|
+| `src/config/static.ts` | Runtime env detection, platform flags |
+| `src/config/const.ts` | App enums, storage keys, events |
+| `src/config/server.env.ts` | API base URLs per environment |
+| `src/config/numbers.ts` | Numeric constants |
+| `env/.env` | Vite environment variables |
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `pnpm dev` | Dev server with HMR |
+| `pnpm build` | Production build |
+| `pnpm zip-worker` | Minify Web Worker scripts |
+| `pnpm lint` | Run ESLint |
+| `pnpm lint:fix` | Auto-fix ESLint issues |
+| `pnpm preview` | Preview production build |
+
+## Tech Stack
+
+- **SolidJS** ^1.9 — Reactive UI framework
+- **Vite** ^6.0 — Build tool
+- **TailwindCSS** ^3.4 — Utility-first CSS
+- **TypeScript** ^5.7 — Type safety
+- **@generouted/solid-router** — File-system routing
+- **@solid-primitives/i18n** — Internationalization
+- **lunzi** — Local utility library (event bus, stateFetch, stateQueue)
