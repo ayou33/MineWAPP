@@ -27,7 +27,6 @@ import application from '@/app/application'
 
 import './style/index.scss'
 import './style/tailwind.css'
-import '@/hooks/useTheme' // initialise theme before first render
 
 function Root () {
   return (

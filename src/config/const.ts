@@ -34,7 +34,6 @@ export const SESSION_KEYS = {
 
 export const LOCAL_SYS_KEYS = {
   FOOT_PRINT: 'foot_print',
-  THEME: 'theme',
 }
 
 export const LOCAL_USER_KEYS = {

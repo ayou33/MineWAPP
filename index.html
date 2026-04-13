@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#121218" />
+  <meta name="theme-color" content="#000000" />
   <link rel="shortcut icon" type="image/png" href="/assets/img/logo.png" />
-  <title>MIMC</title>
+  <title>%VITE_APP_TITLE%</title>
 </head>
-<body class="select-none bg-c-bg text-c-text text-[0.875rem]">
+<body class="select-none bg-theme-primary text-white text-[0.875rem]">
 <noscript>You need to enable JavaScript to run this app.</noscript>
 <div id="loading">
-  <div class="mx-auto h-6 w-6 aspect-square rounded-full border-solid border-2 border-white/20 border-t-white/80 align-middle animate-spin"></div>
+  <div class="mx-auto h-6 w-6 aspect-square rounded-full border-solid border-2 border-l-transparent align-middle animate-spin"></div>
   <style>
     #loading {
       position: absolute;
@@ -19,8 +19,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      /* Dark mode default background — matches --md-background dark value */
-      background-color: #121218;
+      background-color: var(--theme-primary, #2E60F9);
     }
   </style>
 </div>

@@ -1,24 +1,29 @@
-import Scroller from '@/provider/Scroller'
-import HomeNav from './components/HomeNav'
-import HomeHero from './components/HomeHero'
-import HomeStats from './components/HomeStats'
-import HomeServices from './components/HomeServices'
-import HomeProcess from './components/HomeProcess'
-import HomeCreators from './components/HomeCreators'
-import HomeCta from './components/HomeCta'
-import HomeFooter from './components/HomeFooter'
-
+import Icon from '@/components/Icon'
+import { t } from '@/features/i18n'
+import { A } from '@/router'
+import Wifi from 'lucide/wifi'
+  
 export default function Home () {
   return (
-    <Scroller class="h-screen scroll-smooth bg-c-bg">
-      <HomeNav />
-      <HomeHero />
-      <HomeStats />
-      <HomeServices />
-      <HomeProcess />
-      <HomeCreators />
-      <HomeCta />
-      <HomeFooter />
-    </Scroller>
+    <div class="flex flex-col items-center justify-center min-h-screen bg-linear-to-b from-blue to-white px-4">
+      <h1 class="text-4xl font-bold text-theme-primary mb-4">
+        {t('app.title')}
+      </h1>
+      <p class="text-lg text-gray-500 mb-8">
+        {t('app.description')}
+      </p>
+
+      <div class="flex gap-4">
+        <A href="/about" class="px-6 py-3 bg-theme-primary text-white rounded-lg shadow hover:opacity-90 transition">
+          {t('nav.about')}
+        </A>
+        <Icon name="wifi" size="2rem" />
+        <Wifi size={96} absoluteStrokeWidth />
+      </div>
+
+      <div class="mt-16 text-sm text-gray-400">
+        SolidJS + Vite + TailwindCSS
+      </div>
+    </div>
   )
 }
