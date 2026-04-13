@@ -38,12 +38,12 @@ export default function ABTest (props: {
   
   // 动态加载
   if (rest.load) {
-    return <Alternative {...rest} static by={() => ifFeatureAllowed(local.feature, application.userGroup())} load={rest.load} />
+    return <Alternative {...rest} static by={() => ifFeatureAllowed(local.feature, application.account.group())} load={rest.load} />
   }
   
   // 静态加载
   return (
-    <Show when={ifFeatureAllowed(local.feature, application.userGroup())} fallback={rest.fallback}>
+    <Show when={ifFeatureAllowed(local.feature, application.account.group())} fallback={rest.fallback}>
       {rest.children}
     </Show>
   )

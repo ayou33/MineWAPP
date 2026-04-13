@@ -39,8 +39,8 @@ export const ControlledFeatures: Partial<Record<Feature, FeatureControl>> = {
 // Wire these to your native app bridge (e.g. JSBridge, Capacitor, React Native WebView).
 // For pure web projects, leave isApp / isIOSApp / isAndroidApp as false.
 export const platformContext: PlatformContext = {
-  appVersion: '9.9.9',   // replace with bridge.getAppVersion() or import.meta.env.VITE_APP_VERSION
-  isApp: false,          // replace with bridge detection logic
+  appVersion: '9.9.9', // replace with bridge.getAppVersion() or import.meta.env.VITE_APP_VERSION
+  isApp: false, // replace with bridge detection logic
   isIOSApp: false,
   isAndroidApp: false,
 }

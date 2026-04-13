@@ -107,7 +107,7 @@ export function buildCommonParams (): Record<string, unknown> {
  *   axios.defaults.headers.common['Authorization'] = `Bearer ${_user.token}`
  */
 function buildUserParams (): Record<string, unknown> | null {
-  const _user = application.user()
+  const _user = application.account.current()
   if (_user) {
     return {
       userId: _user.userId,

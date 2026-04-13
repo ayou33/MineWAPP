@@ -30,7 +30,7 @@ export default function Auth () {
       // TODO: replace with real API call
       await new Promise(r => setTimeout(r, 800))
 
-      application.login({
+      application.account.login({
         userId: Date.now(),
         token: 'mock-token',
         name,

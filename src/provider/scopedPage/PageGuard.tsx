@@ -1,9 +1,9 @@
 /**
- * socoped page guard, 用来保护需要特定权限才能访问的页面,
+ * scoped page guard, 用来保护需要特定权限才能访问的页面,
  * 规则如下:
  * - 如果用户没有登录且访问AUTH_SCOPE.PRIVATE及以上授权级别的页面, 则重定向到登录页
  * - 如果用户已经登录但访问AUTH_SCOPE.AUTHED及以上授权级别的页面, 显示403错误
- * 
+ *
  */
 import application from '@/app/application'
 import { AUTH_PATH, AUTH_SCOPE } from '@/config'

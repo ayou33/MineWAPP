@@ -1,58 +1,50 @@
 /**
- * Lightweight application state singleton.
- * Manages locale, auth state, and user info.
- * Extend this module to add app-level concerns.
+ * Application singleton — the single entry point for all top-level app state.
+ *
+ * Compose behaviour by passing subsystems to `createApplication`.
+ * Every subsystem is accessible as a typed property on the returned instance.
+ *
+ * @see AppCore.ts   — Application class + createApplication factory
+ * @see subsystems/  — Individual subsystem implementations
+ *
+ * Extending the app:
+ *   1. Create a new class in `subsystems/` that implements `IAppSubsystem`.
+ *   2. Add it to the `createApplication` call below.
+ *   3. The new subsystem is immediately accessible as `application.<key>`.
  */
-import { LOCAL_USER_KEYS, USER_ROLE } from '@/config'
-import { defaultLang, readSystemLang } from '@/config/langs'
-import { localGet, localSet } from 'lunzi'
-import { createSignal } from 'solid-js'
+import { createApplication } from './AppCore'
+import { AccountSubsystem, ApiSchemaSubsystem, BridgeSubsystem, ReportSubsystem } from '@/app/subsystems'
 
-export type AppUser = {
-  group: number
-  userId: string | number
-  token: string
-  [key: string]: unknown
-}
+export type { AppUser } from './subsystems/AccountSubsystem'
+export type { ApplicationInstance } from './AppCore'
+// Export ISocket so consumers can write their own adapters without importing
+// from the subsystem path directly.
+export type { ISocket, SocketState } from './subsystems/SocketSubsystem'
 
-const savedLocale = localGet(LOCAL_USER_KEYS.LOCALE) || readSystemLang() || defaultLang
-const [locale, setLocale] = createSignal(savedLocale)
+const application = createApplication({
+  /** User session, system role, permissions — login / logout / guest. */
+  account: new AccountSubsystem(),
 
-const savedUser = localGet(LOCAL_USER_KEYS.USER) as AppUser | null
-const [user, setUser] = createSignal<AppUser | null>(savedUser)
+  /** Field-mapping tables: decode server payloads, encode request params. */
+  schema: new ApiSchemaSubsystem(),
 
-function role () {
-  return user() ? USER_ROLE.USER : USER_ROLE.PASSENGER
-}
+  /** Hybrid JSBridge: RPC calls to native iOS/Android host. */
+  bridge: new BridgeSubsystem(),
 
-function login (userData: AppUser) {
-  localSet(LOCAL_USER_KEYS.USER, userData)
-  setUser(userData)
-}
+  /** Error capture, analytics events, batched tracking. */
+  report: new ReportSubsystem(),
 
-function logout () {
-  localSet(LOCAL_USER_KEYS.USER, null)
-  setUser(null)
-}
-
-function updateLocale (lang: string) {
-  localSet(LOCAL_USER_KEYS.LOCALE, lang)
-  setLocale(lang)
-}
-
-async function ready () {
-  return !!user()
-}
-
-const application = {
-  userGroup: () => user()?.group,
-  locale,
-  setLocale: updateLocale,
-  user,
-  role,
-  login,
-  logout,
-  ready,
-}
+  // ── Socket connections ─────────────────────────────────────────────────────
+  // Uncomment and pass your ISocket adapter(s) to enable.
+  //
+  // Single connection (name defaults to 'main'):
+  //   socket: new SocketSubsystem(new MySocketAdapter('wss://example.com')),
+  //
+  // Multiple named connections:
+  //   socket: new SocketSubsystem({
+  //     main:  new MySocketAdapter('wss://example.com/chat'),
+  //     trade: new MySocketAdapter('wss://example.com/trade'),
+  //   }),
+})
 
 export default application
