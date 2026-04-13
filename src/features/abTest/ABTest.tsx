@@ -2,17 +2,29 @@
  * File: ABTest.tsx of claw-eden-ts
  * Author: 阿佑[ayooooo@petalmail.com]
  * Date: 2024/9/5 20:05
+ *
+ * Core A/B test component — do not edit for project-specific concerns.
+ * See feature.config.ts to define features and rollout rules.
  */
 import Alternative from '@/features/abTest/Alternative'
 import { NOT_EXIST } from '@/config'
-import { ControlledFeatures, Feature } from './sample-feature'
+import { compatible, FeatureControl } from './abTest.engine'
+import { ControlledFeatures, Feature, platformContext } from './feature.config'
 import { JSX, ParentProps, Show, splitProps } from 'solid-js'
 import application from '@/app/application'
 
-export function ifFeatureAllowed (feature: Feature, userGroup?: number) {
+export function ifFeatureAllowed (feature: Feature, userGroup?: number): boolean {
   if (!userGroup) return false
-  
-  return (ControlledFeatures[feature]?.groups ?? [userGroup]).indexOf(userGroup) !== NOT_EXIST
+
+  const control: FeatureControl | undefined = ControlledFeatures[feature]
+
+  // Group check
+  const groupAllowed = (control?.groups ?? [userGroup]).indexOf(userGroup) !== NOT_EXIST
+
+  // Version / platform check
+  const versionAllowed = compatible(control, platformContext)
+
+  return groupAllowed && versionAllowed
 }
 
 export default function ABTest (props: {

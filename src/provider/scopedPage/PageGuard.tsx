@@ -7,6 +7,7 @@
  */
 import application from '@/app/application'
 import { AUTH_PATH, AUTH_SCOPE } from '@/config'
+import { t } from '@/features/i18n'
 import { useNavigate } from '@solidjs/router'
 import { createEffect, JSX, ParentProps, Show } from 'solid-js'
 
@@ -36,7 +37,7 @@ function Forbidden (): JSX.Element {
   return (
     <div class="flex flex-col items-center justify-center size-full">
       <p class="text-4xl font-bold">403</p>
-      <p class="text-sm opacity-50 mt-2">无权限访问</p>
+      <p class="text-sm opacity-50 mt-2">{t('error.forbidden')}</p>
     </div>
   )
 }

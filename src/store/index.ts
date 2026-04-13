@@ -1,31 +1,16 @@
 /**
  * Global state store — generic SolidJS store with typed selectors and scoped actions.
  *
- * To add a new state slice:
- *   1. Define its type and default value
- *   2. Add the key to the State type
- *   3. Add the default to the createStore call
- *   4. Create actions with createScopedActions('key', { ... })
+ * To add a new state slice, edit store.config.ts — do not modify this file.
  */
 import * as R from 'ramda'
 import { createMemo } from 'solid-js'
 import { createStore, SetStoreFunction, Store } from 'solid-js/store'
+import { initialState, State } from './store.config'
 
-type State = {
-  user: {
-    id: string | number | null
-    name: string
-    avatar: string
-  }
-}
+export type { State } from './store.config'
 
-const [store, setStore] = createStore<State>({
-  user: {
-    id: null,
-    name: '',
-    avatar: '',
-  },
-})
+const [store, setStore] = createStore<State>(initialState)
 
 export function useSelector<T, F extends boolean = false> (fn: (state: Store<State>) => T, ensure?: F) {
   return createMemo(() => {

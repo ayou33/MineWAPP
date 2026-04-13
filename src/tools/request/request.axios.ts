@@ -3,7 +3,7 @@
  * Author: 阿佑[ayooooo@petalmail.com]
  * Date: 2024/5/13 11:11
  */
-import { buildCommonParams } from '@/tools/request/common'
+import { buildCommonParams } from '@/tools/request/request.config'
 import axios, { AxiosRequestConfig } from 'axios'
 
 function extendFormData (form: FormData, obj: Record<string, unknown>) {

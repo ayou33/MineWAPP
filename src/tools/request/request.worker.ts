@@ -4,7 +4,7 @@
  * Date: 2024/5/13 11:12
  */
 import { createWorker } from '@/common/worker'
-import { buildCommonParams } from '@/tools/request/common'
+import { buildCommonParams } from '@/tools/request/request.config'
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import * as R from 'ramda'
 

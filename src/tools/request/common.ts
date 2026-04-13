@@ -1,34 +1,7 @@
 /**
- * Common request parameters builder.
- * Extend this to add authentication tokens, device info, etc.
+ * Pure request utilities — not project-specific.
+ * For customisable request params see request.config.ts → buildCommonParams.
  */
-import application from '@/app/application'
-
-function device () {
-  return {
-    language: application.locale(),
-    _t: Date.now(),
-  }
-}
-
-function user () {
-  const _user = application.user()
-  if (_user) {
-    return {
-      userId: _user.userId,
-      token: _user.token,
-    }
-  }
-
-  return null
-}
-
-export function buildCommonParams () {
-  return {
-    ...device(),
-    ...user(),
-  }
-}
 
 export function makeFormData (obj: Data) {
   const formData = new FormData()

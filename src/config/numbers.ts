@@ -32,5 +32,3 @@ export const ONE_HOUR = 3600000
 export const ONE_DAY = 86400000
 
 export const HALF_SECOND = 500
-
-export const MONEY_MULTIPLIER = 100

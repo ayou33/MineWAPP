@@ -30,5 +30,9 @@
     "error": "Something went wrong",
     "retry": "Retry",
     "empty": "No data"
+  },
+  "error": {
+    "forbidden": "Access denied",
+    "forbidden_hint": "You don't have permission to view this page."
   }
 }

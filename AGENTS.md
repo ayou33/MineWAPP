@@ -46,7 +46,7 @@ src/module/foo/
 ├── components/          # module-specific components (optional)
 └── hooks/               # module-specific hooks (optional)
 ```
-A new module's state slice must be registered in `src/store/index.ts` (`State` type + initial value).
+A new module's state slice must be registered in `src/store/store.config.ts` (`State` type + `initialState`).
 
 ## Page ↔ Module Pattern
 Pages are **thin wrappers**. They import a module's entry component and pass it as a `ValidComponent` to `ScopedPage`:
@@ -62,7 +62,7 @@ export default function FooPage () {
 ```
 **Critical**: `ScopedPage` uses `<Dynamic component={children} />` — children must be a `ValidComponent` function reference, **never JSX** like `<Foo />`.
 
-## Request Layer (`src/tools/request/index.ts`)
+## Request Layer (`src/tools/request/`)
 - **Never** import axios directly. Use `get`/`post` factory functions.
 - Requests run through `lunzi/stateFetch` priority queue with optional Web Worker transport.
 - Mock system available via `src/tools/mock/` — mock entries matched by URL prefix.
@@ -70,6 +70,20 @@ export default function FooPage () {
 export const fetchFoo = get<FooData, FooParams>('/api/foo/data')
 export const submitBar = post<Result, BarParams>('/api/bar/submit')
 ```
+
+### Customisation (`src/tools/request/request.config.ts`)
+All project-specific request concerns live in **one file** — do not edit the other request files across projects:
+
+| Export | What to customise |
+|---|---|
+| `ERROR_CODE` | Backend error code catalog (e.g. `TOKEN_EXPIRED: '00009'`) |
+| `ServerResponse<T>` | API response envelope shape (`success/data` vs `code/msg/result`) |
+| `Pagination` | Pagination field names (`pageNum/pageSize` vs `page/limit`) |
+| `ApiPath` | URL path prefixes your backend exposes (`/api/…`, `/v2/…`) |
+| `buildCommonParams` | Fields merged into every request (token, device ID, market, HMAC…) |
+| `responseParser` | Unwrap responses, handle global error codes (token expiry, bans…) |
+
+`index.ts`, `request.axios.ts`, and `request.worker.ts` import from `request.config.ts` and must not be edited for project-specific concerns.
 
 ## ScopedPage (`src/provider/scopedPage/ScopedPage.tsx`)
 Wraps every page. Auto-cancels in-flight requests, toasts, and popups on unmount. Namespaces events to the page lifecycle.
@@ -100,7 +114,7 @@ Embedded inside `ScopedPage`. Handles route-level access control reactively:
 
 Guard logic uses `application.role()` (a reactive signal) — re-evaluates on login/logout without a page reload.
 
-## State Management (`src/store/index.ts`)
+## State Management (`src/store/`)
 ```ts
 // Read (reactive memo):
 const name = useSelector(s => s.user.name)
@@ -110,6 +124,19 @@ actions.setName('Alice')
 const actions = createScopedActions('user', {
   setName(set, name: string) { set('name', name) }
 })
+```
+
+**To add a state slice** edit `src/store/store.config.ts` only — `index.ts` is pure infrastructure:
+```ts
+// store.config.ts
+export type State = {
+  user: { id: string | null; name: string; avatar: string }
+  cart: { items: CartItem[]; total: number }   // ← add new slice here
+}
+export const initialState: State = {
+  user: { id: null, name: '', avatar: '' },
+  cart: { items: [], total: 0 },               // ← and its default value
+}
 ```
 
 ## Global Events (`src/common/event.ts`)
@@ -172,15 +199,16 @@ Group-based feature flag system for conditional rendering and lazy loading.
 
 | File | Purpose |
 |---|---|
-| `ABTest.tsx` | Main component — renders children/fallback based on `ifFeatureAllowed` |
-| `Alternative.tsx` | Lazy-loads a component via dynamic import, switches between `default`/`fallback` exports by an `Accessor<boolean>` predicate |
+| `ABTest.tsx` | Main component — renders children/fallback based on `ifFeatureAllowed` (core, do not edit) |
+| `Alternative.tsx` | Lazy-loads a component via dynamic import, switches between `default`/`fallback` exports by an `Accessor<boolean>` predicate (core) |
 | `FeatureAlternative.tsx` | Convenience wrapper around `Alternative` for feature-flag-driven lazy loading |
-| `sample-feature.ts` | Feature enum, `ControlledFeatures` config, and version compatibility helpers |
+| `abTest.engine.ts` | Core engine: `FeatureControl` type, `compareVersion`, `compatible` (core, do not edit) |
+| `feature.config.ts` | **Project config**: `Feature` enum, `ControlledFeatures` rules, `platformContext` bridge wiring |
 
 **Usage — static children:**
 ```tsx
 import ABTest from '@/features/abTest/ABTest'
-import { Feature } from '@/features/abTest/sample-feature'
+import { Feature } from '@/features/abTest/feature.config'
 
 <ABTest feature={Feature.A} fallback={<OldUI />}>
   <NewUI />
@@ -195,19 +223,32 @@ import { Feature } from '@/features/abTest/sample-feature'
 />
 ```
 
-**Feature configuration** (`sample-feature.ts`):
+**Feature configuration** (`feature.config.ts`):
 ```ts
+export enum Feature {
+  NEW_CHECKOUT = 'new_checkout',
+}
+
 export const ControlledFeatures: Partial<Record<Feature, FeatureControl>> = {
-  [Feature.A]: {
+  [Feature.NEW_CHECKOUT]: {
     groups: [1, 2],          // only users in these groups see the feature
     versions: { ios: '2.0.0', android: '2.0.0', web: true },
   },
 }
+
+// Wire to your native bridge here (Capacitor, JSBridge, etc.)
+export const platformContext: PlatformContext = {
+  appVersion: '9.9.9',
+  isApp: false,
+  isIOSApp: false,
+  isAndroidApp: false,
+}
 ```
 - `groups`: if omitted, all authenticated users qualify.
 - `versions`: version-gate for native app builds; `web: true` enables on web.
-- `ifFeatureAllowed(feature, userGroup)` — pure helper, safe to call outside components.
+- `ifFeatureAllowed(feature, userGroup)` checks **both** group and platform/version gates.
 - Add new features to the `Feature` enum and optionally to `ControlledFeatures`.
+- `sample-feature.ts` is superseded by `feature.config.ts` + `abTest.engine.ts` and can be deleted.
 
 ## Form System (`src/features/form/`)
 Headless reactive form engine:
@@ -229,22 +270,30 @@ File-system routing via `@generouted/solid-router`. `src/pages/_app.tsx` wraps a
 | File | Purpose |
 |---|---|
 | `static.ts` | Runtime env detection (`isAndroid`, `isIOS`, `isPC`, `isDev`, `isProd`, `brand`) |
-| `const.ts` | Enums: `TipType`, `TipPosition`, `USER_ROLE`, `AUTH_SCOPE`, `SESSION_KEYS` |
+| `const.ts` | Enums: `TipType`, `TipPosition`, `USER_ROLE`, `AUTH_SCOPE`, `SESSION_KEYS`; `EVENTS` (core: LOGIN/LOGOUT/TOKEN_ERROR/WAKEUP; project-specific: CONSUME/BALANCE_CHANGED) |
 | `server.env.ts` | API base URLs per environment |
-| `langs.ts` | Supported locales and system language detection |
-| `defaults.ts` | Default values re-exported via `index.ts` |
-| `numbers.ts` | Numeric constants re-exported via `index.ts` |
+| `langs.ts` | Supported locales (project-specific list) and system language detection |
+| `defaults.ts` | Default values + project-specific domain constants (e.g. `MONEY_MULTIPLIER`) |
+| `numbers.ts` | Pure numeric constants (time, index sentinels, booleans) |
+
+**Customisation notes:**
+- `const.ts` — `EVENTS.CONSUME` / `EVENTS.BALANCE_CHANGED` and the `USER_ROLE` ladder are project-specific. The four core events (LOGIN, LOGOUT, TOKEN_ERROR, WAKEUP) must not be renamed.
+- `langs.ts` — edit the `langs` array and `defaultLang` to match the locales your project supports.
+- `defaults.ts` — add domain constants here (not in `numbers.ts`).
 
 ## Key Files
 | File | Purpose |
 |---|---|
 | `src/app/application.ts` | App singleton: auth state, locale, role, userGroup |
+| `src/store/store.config.ts` | **Project config**: `State` type + `initialState` — edit to add/remove state slices |
+| `src/store/index.ts` | Store infrastructure: `useSelector`, `createScopedActions` (do not edit) |
+| `src/tools/request/request.config.ts` | **Project config**: ERROR_CODE, ServerResponse, Pagination, ApiPath, buildCommonParams, responseParser |
+| `src/tools/request/index.ts` | Request infrastructure: `get`/`post` factories, `receive` (do not edit) |
+| `src/features/abTest/feature.config.ts` | **Project config**: `Feature` enum, `ControlledFeatures`, `platformContext` |
+| `src/features/abTest/abTest.engine.ts` | A/B test engine: version comparison, compatibility check (do not edit) |
 | `src/features/abTest/ABTest.tsx` | Group-based conditional rendering component |
-| `src/features/abTest/sample-feature.ts` | Feature enum, group/version config, compatibility helpers |
-| `src/store/index.ts` | Global store, `useSelector`, `createScopedActions` |
 | `src/provider/scopedPage/ScopedPage.tsx` | Page-scoped lifecycle + auto-cleanup |
-| `src/provider/scopedPage/PageGuard.tsx` | Auth redirect + 403 screen for scoped pages |
-| `src/tools/request/index.ts` | `get`/`post` factories via `lunzi/stateFetch` |
+| `src/provider/scopedPage/PageGuard.tsx` | Auth redirect + i18n 403 screen for scoped pages |
 | `src/common/event.ts` | Global event bus via `lunzi/useEvent` |
 | `src/style/var.scss` | CSS custom properties (theme, timing, easing) |
 | `src/style/transition.scss` | All animation classes |
@@ -253,6 +302,21 @@ File-system routing via `@generouted/solid-router`. `src/pages/_app.tsx` wraps a
 | `src/components/tips/Tip.tsx` | Self-managed tip animations |
 | `src/components/popups/Popups.tsx` | Popup queue with TransitionGroup |
 | `src/pages/_app.tsx` | App wrapper, core lifecycle events |
+
+## Template Customisation Checklist
+When adapting this template to a new project, these are the **only files** you need to touch. All other files are core infrastructure.
+
+| File | What to configure |
+|---|---|
+| `src/tools/request/request.config.ts` | `ERROR_CODE`, `ServerResponse<T>`, `Pagination`, `ApiPath`, `buildCommonParams`, `responseParser` |
+| `src/store/store.config.ts` | `State` type, `initialState` |
+| `src/features/abTest/feature.config.ts` | `Feature` enum, `ControlledFeatures`, `platformContext` |
+| `src/config/const.ts` | `USER_ROLE` ladder, project-specific `EVENTS`, `AUTH_PATH` |
+| `src/config/server.env.ts` | Dev / prod API base URLs |
+| `src/config/langs.ts` | Supported locales, `defaultLang` |
+| `src/config/defaults.ts` | App name, package, market, domain constants |
+| `src/app/application.ts` | `AppUser` type, role calculation, login/logout logic |
+| `public/lang/*.json` | i18n translation keys |
 
 ## Coding Conventions
 - Alias: `@` → `src/`, `/^lunzi/` → `./lunzi` directory.
