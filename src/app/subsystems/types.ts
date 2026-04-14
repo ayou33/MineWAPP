@@ -40,6 +40,15 @@ export type AppContext = {
    * `null` on the web or before the bridge responds.
    */
   appVersion: string | null
+  /** Node environment string, e.g. `'development'` or `'production'`. */
+  env: string
+  /** Vite build mode, e.g. `'development'`, `'production'`, `'test'`. */
+  mode: string
+  /**
+   * Stable browser fingerprint for this device/browser instance.
+   * Generated from browser traits on first visit and persisted in localStorage.
+   */
+  webId: string
 }
 
 // ─── AppBase ──────────────────────────────────────────────────────────────────
@@ -70,6 +79,15 @@ export interface AppBase {
   readonly isAndroid: boolean
   readonly isHybrid: boolean
   readonly appVersion: string | null
+  /** Node environment string, e.g. `'development'` or `'production'`. */
+  readonly env: string
+  /** Vite build mode, e.g. `'development'`, `'production'`, `'test'`. */
+  readonly mode: string
+  /**
+   * Stable browser fingerprint for this device/browser instance.
+   * Generated from browser traits on first visit and persisted in localStorage.
+   */
+  readonly webId: string
   /** Returns a frozen snapshot of the current context. */
   context(): Readonly<AppContext>
   /**

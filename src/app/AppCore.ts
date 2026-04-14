@@ -3,21 +3,16 @@
  *
  * Wires subsystems together and orchestrates the boot sequence.
  * The `createApplication` factory returns an intersection type so subsystems
- * are accessible as direct named properties with full type inference:
+ * are accessible as direct named properties with full type inference
  *
- *   const application = createApplication({ account: new AccountSubsystem(), ... })
- *   application.account.login(userData)   // ✅ typed
- *   application.locale()               // ✅ core locale accessor
- *   application.isHybrid               // ✅ top-level context
- *   application.appVersion             // ✅ top-level context
- *   await application.ready()          // ✅ boot
  */
 import { LOCAL_USER_KEYS, USER_ROLE } from '@/config'
-import { defaultLang, readSystemLang } from '@/config/langs'
+import { defaultLocale, readSystemLang } from '@/config/locale'
 import { localGet, localSet } from 'lunzi'
 import { Accessor, createSignal } from 'solid-js'
 import type { AppBase, AppContext, IAppSubsystem } from '@/app/subsystems'
-import type { BridgeSubsystem } from '@/app/subsystems/BridgeSubsystem'
+import type { BridgeSubsystem } from '@/app/subsystems/bridge/BridgeSubsystem'
+import { resolveWebId } from '@/app/webId'
 
 export type SubsystemMap = Record<string, IAppSubsystem<any>>
 
@@ -41,14 +36,26 @@ export class Application<SS extends SubsystemMap> implements AppBase {
   readonly jsVersion: string
   readonly ua: string
   readonly launchUrl: string
-  readonly isWeb: boolean
   readonly isPC: boolean
   readonly isIOS: boolean
   readonly isAndroid: boolean
-  readonly isHybrid: boolean
+  private _isHybrid = false
+  private _isWeb = true
+  get isHybrid (): boolean { return this._isHybrid }
+  get isWeb (): boolean { return this._isWeb }
   private _appVersion: string | null = null
 
   get appVersion (): string | null { return this._appVersion }
+
+  /** `process.env.NODE_ENV` captured at construction time. */
+  readonly env: string
+  /** `import.meta.env.MODE` captured at construction time. */
+  readonly mode: string
+  /**
+   * Stable browser fingerprint persisted in localStorage.
+   * Derived from browser traits on first visit; subsequent visits reload the same value.
+   */
+  readonly webId: string
 
   /** Returns a frozen snapshot of the current runtime context. */
   context (): Readonly<AppContext> {
@@ -62,12 +69,15 @@ export class Application<SS extends SubsystemMap> implements AppBase {
       isAndroid: this.isAndroid,
       isHybrid: this.isHybrid,
       appVersion: this._appVersion,
+      env: this.env,
+      mode: this.mode,
+      webId: this.webId,
     })
   }
 
   /**
    * Manually set the native app version.
-   * Use when the version is retrieved outside of `boot()`, e.g. from a
+   * Use when the version is retrieved outside `boot()`, e.g. from a
    * deferred bridge call or a custom native message handler.
    */
   setAppVersion (version: string): void {
@@ -82,7 +92,7 @@ export class Application<SS extends SubsystemMap> implements AppBase {
 
     // ── Locale ──────────────────────────────────────────────────────────────
     // Locale is a core concern shared by i18n, request layer, and subsystems.
-    const saved = localGet(LOCAL_USER_KEYS.LOCALE) || readSystemLang() || defaultLang
+    const saved = localGet(LOCAL_USER_KEYS.LOCALE) || readSystemLang() || defaultLocale
     const [locale, setLocale] = createSignal<string>(saved)
     this.locale = locale
     this.setLocale = (lang: string) => {
@@ -99,7 +109,7 @@ export class Application<SS extends SubsystemMap> implements AppBase {
 
     // ── Context ─────────────────────────────────────────────────────────────
     // All static environment fields are captured once here, before any
-    // subsystem initialises, so they are available immediately.
+    // subsystem initializes, so they are available immediately.
     const ua = navigator.userAgent
     const isIOS = /\(i[^;]+;( U;)? CPU.+Mac OS X/.test(ua)
     const isAndroid = ua.includes('Android') || (!isIOS && ua.includes('Linux'))
@@ -109,15 +119,9 @@ export class Application<SS extends SubsystemMap> implements AppBase {
     this.isPC = !isIOS && !isAndroid
     this.jsVersion = import.meta.env.VITE_APP_VERSION ?? ''
     this.launchUrl = window.location.href
-
-    const w = window as unknown as Record<string, unknown>
-    const iosHandlers = (w['webkit'] as Record<string, unknown> | undefined)?.['messageHandlers'] as
-      Record<string, unknown> | undefined
-    const isHybrid =
-      (iosHandlers !== null && iosHandlers !== undefined && typeof iosHandlers['bridge'] !== 'undefined') ||
-      typeof w['__bridge'] !== 'undefined'
-    this.isHybrid = isHybrid
-    this.isWeb = !isHybrid
+    this.env = process.env.NODE_ENV ?? 'production'
+    this.mode = import.meta.env.MODE
+    this.webId = resolveWebId()
 
     // Attach every subsystem as a direct property so callers can write
     // `application.account.login()` rather than `application.use('account').login()`.
@@ -125,7 +129,7 @@ export class Application<SS extends SubsystemMap> implements AppBase {
   }
 
   /**
-   * Initialise the application once.
+   * Initialize the application once.
    * Calls `subsystem.init(this)` on each registered subsystem in order.
    * Subsequent calls return the same promise.
    */
@@ -149,23 +153,21 @@ export class Application<SS extends SubsystemMap> implements AppBase {
   }
 
   private async _initialize (): Promise<void> {
-    for (const system of Object.values(this._systems)) {
-      await system.init?.(this as unknown as ApplicationInstance<SS>)
+    // Bridge must initialize first — its handshake determines isHybrid for
+    // every other subsystem that may query the flag during their own init.
+    const bridgeEntry = (this._systems as Record<string, IAppSubsystem<any>>)['bridge']
+    if (bridgeEntry) {
+      await bridgeEntry.init?.(this as unknown as ApplicationInstance<SS>)
+      const bridge = bridgeEntry as unknown as Pick<BridgeSubsystem, 'isAvailable' | 'appVersion'>
+      this._isHybrid = bridge.isAvailable
+      this._isWeb = !this._isHybrid
+      // appVersion is delivered as part of the handshake response — no extra RPC needed.
+      if (bridge.appVersion) this._appVersion = bridge.appVersion
     }
 
-    // If a BridgeSubsystem is registered and available, enrich appVersion
-    // with the native host version. Failure is silently ignored.
-    if (this.isHybrid) {
-      const bridge = (this._systems as Record<string, unknown>)['bridge'] as
-        Pick<BridgeSubsystem, 'isAvailable' | 'call'> | undefined
-      if (bridge?.isAvailable) {
-        try {
-          const version = await bridge.call<string>('getAppVersion')
-          if (version) this._appVersion = version
-        } catch {
-          // Bridge responded with an error or method is not implemented — non-fatal.
-        }
-      }
+    for (const [key, system] of Object.entries(this._systems)) {
+      if (key === 'bridge') continue // already initialized above
+      await system.init?.(this as unknown as ApplicationInstance<SS>)
     }
   }
 }
