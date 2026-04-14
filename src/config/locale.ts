@@ -3,18 +3,28 @@ import { ZERO } from './numbers'
 // ─── Supported locales ────────────────────────────────────────────────────────
 // Add or remove BCP-47 language tags to match the locales your project supports.
 // The first matching system language is used as the initial locale.
-const langs = ['en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'ko-KR', 'es-ES', 'fr-FR', 'de-DE', 'pt-PT', 'it-IT']
+export const locales = [
+  {
+    code: 'en-US',
+    name: 'English',
+  },
+  {
+    code: 'zh-CN',
+    name: '简体中文',
+  },
+  {
+    code: 'zh-TW',
+    name: '繁体中文',
+  },
+] as const
 
-export default langs
-
-// The fallback locale used when no system language matches any entry in `langs`.
-export const defaultLang = 'en-US'
+export const defaultLocale = 'en-US'
 
 export function readSystemLang () {
   const incorporate: Data = {}
-  langs.map(item => {
+  locales.map(item => {
     if (!item) return
-    incorporate[item.split('-')[ZERO]] = item
+    incorporate[item.code.split('-')[ZERO]] = item.code
   })
 
   const systemLng = navigator.language

@@ -4,88 +4,11 @@
  * Date: 2024/5/7 14:46
  */
 import { ONE, ZERO } from '@/config'
-import { defaultLang } from '@/config/langs'
+import { defaultLocale, locales } from '@/config/locale'
 import { TemplateResolver } from '@solid-primitives/i18n'
 import * as R from 'ramda'
 
-export const locales = [
-  {
-    code: 'en-US',
-    name: 'English',
-  },
-  {
-    code: 'zh-CN',
-    name: '简体中文',
-  },
-  {
-    code: 'zh-TW',
-    name: '繁体中文',
-  },
-  // {
-  //   code: 'ar-AE',
-  //   name: 'عربي',
-  // },
-  {
-    code: 'de-DE',
-    name: 'Deutsch',
-  },
-  {
-    code: 'fr-FR',
-    name: 'Français',
-  },
-  {
-    code: 'nl-NL',
-    name: 'Nederlands',
-  },
-  {
-    code: 'vi-VN',
-    name: 'Tiếng Việt',
-  },
-  {
-    code: 'no-NO',
-    name: 'Norsk',
-  },
-  {
-    code: 'fi-FI',
-    name: 'Suomi',
-  },
-  {
-    code: 'sv-SE',
-    name: 'Svenska',
-  },
-  {
-    code: 'da-DK',
-    name: 'Dansk',
-  },
-  {
-    code: 'it-IT',
-    name: 'Italiano',
-  },
-  {
-    code: 'es-ES',
-    name: 'Español',
-  },
-  {
-    code: 'th-TH',
-    name: 'ภาษาไทย',
-  },
-  {
-    code: 'ja-JP',
-    name: '日本語',
-  },
-  {
-    code: 'tr-TR',
-    name: 'Türkçe',
-  },
-  {
-    code: 'pt-PT',
-    name: 'Português',
-  }
-] as const
-
-export const defaultLocale = defaultLang
-
-export const fallbackLocale = defaultLang
+export const fallbackLocale = defaultLocale
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Dictionary<T = any> = Record<string | number, T>

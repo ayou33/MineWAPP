@@ -5,6 +5,7 @@ import generouted from '@generouted/solid-router/plugin'
 import path from 'path'
 // @ts-ignore
 import eslint from 'vite-plugin-eslint'
+import { version } from './package.json'
 
 export default defineConfig(({ mode }) => {
   const server = {
@@ -43,6 +44,10 @@ export default defineConfig(({ mode }) => {
       rolldownOptions: {
         external: ['sharp'],
       },
+    },
+    define: {
+      // Expose package.json version as import.meta.env.VITE_APP_VERSION at build time.
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(version),
     },
   }
 })

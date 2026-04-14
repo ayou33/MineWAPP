@@ -24,7 +24,7 @@ export type { AppContext } from './subsystems/types'
 
 const application = createApplication({
   /** Hybrid JSBridge: RPC calls to native iOS/Android host. */
-  bridge: new BridgeSubsystem(),
+  bridge: new BridgeSubsystem('bridge', 'init'),
 
   /** User session, system role, permissions — login / logout / guest. */
   account: new AccountSubsystem(),

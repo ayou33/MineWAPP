@@ -5,6 +5,6 @@ export type { ISocket, SocketMap, SocketHandler } from './SocketSubsystem'
 
 export { AccountSubsystem } from './AccountSubsystem'
 export { ApiSchemaSubsystem } from './ApiSchemaSubsystem'
-export { BridgeSubsystem } from './BridgeSubsystem'
+export { BridgeSubsystem } from './bridge'
 export { ReportSubsystem } from './ReportSubsystem'
 export { SocketSubsystem, SocketState } from './SocketSubsystem'

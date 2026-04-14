@@ -60,7 +60,9 @@ function loading () {
 
 const loaded = loading()
 
-application.ready()
+console.log(application)
+
+application.boot()
   .then(() => {
     loadLang(l => `/lang/${l}.json`, () => {
       loaded()
