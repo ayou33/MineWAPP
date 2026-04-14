@@ -26,7 +26,6 @@ export default defineConfig(({ mode }) => {
       alias: [
         { find: '@', replacement: path.resolve(__dirname, './src') },
         { find: /^lunzi/, replacement: path.resolve(__dirname, './lunzi') },
-        { find: /lucide\/(.+)/, replacement: 'lucide-solid/icons/$1' },
       ],
     },
     server: {

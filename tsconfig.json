@@ -17,9 +17,7 @@
     "paths": {
       "@/*": ["src/*"],
       "lunzi": ["lunzi/index"],
-      "lunzi/*": ["lunzi/*"],
-      "lucide": ["node_modules/lucide-solid/dist/types/lucide-solid.d.ts"],
-      "lucide/*": ["node_modules/lucide-solid/dist/types/icons/*"]
+      "lunzi/*": ["lunzi/*"]
     }
   },
   "include": [
