@@ -3,6 +3,8 @@
  *
  * Compose behaviour by passing subsystems to `createApplication`.
  * Every subsystem is accessible as a typed property on the returned instance.
+ * Core context (UA, platform, hybrid mode, etc.) is always available directly
+ * on the instance without a subsystem wrapper.
  *
  * @see AppCore.ts   — Application class + createApplication factory
  * @see subsystems/  — Individual subsystem implementations
@@ -13,19 +15,16 @@
  *   3. The new subsystem is immediately accessible as `application.<key>`.
  */
 import { createApplication } from './AppCore'
-import { AccountSubsystem, ApiSchemaSubsystem, BridgeSubsystem, ContextSubsystem, ReportSubsystem } from '@/app/subsystems'
+import { AccountSubsystem, ApiSchemaSubsystem, BridgeSubsystem, ReportSubsystem } from '@/app/subsystems'
 
 export type { AppUser } from './subsystems/AccountSubsystem'
 export type { ApplicationInstance } from './AppCore'
 export type { ISocket, SocketState } from './subsystems/SocketSubsystem'
-export type { AppContext } from './subsystems/ContextSubsystem'
+export type { AppContext } from './subsystems/types'
 
 const application = createApplication({
   /** Hybrid JSBridge: RPC calls to native iOS/Android host. */
   bridge: new BridgeSubsystem(),
-
-  /** Runtime environment context — platform, UA, hybrid mode, app version. */
-  context: new ContextSubsystem(),
 
   /** User session, system role, permissions — login / logout / guest. */
   account: new AccountSubsystem(),

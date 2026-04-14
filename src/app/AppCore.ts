@@ -8,13 +8,16 @@
  *   const application = createApplication({ account: new AccountSubsystem(), ... })
  *   application.account.login(userData)   // ✅ typed
  *   application.locale()               // ✅ core locale accessor
+ *   application.isHybrid               // ✅ top-level context
+ *   application.appVersion             // ✅ top-level context
  *   await application.ready()          // ✅ boot
  */
 import { LOCAL_USER_KEYS, USER_ROLE } from '@/config'
 import { defaultLang, readSystemLang } from '@/config/langs'
 import { localGet, localSet } from 'lunzi'
 import { Accessor, createSignal } from 'solid-js'
-import type { AppBase, IAppSubsystem } from '@/app/subsystems'
+import type { AppBase, AppContext, IAppSubsystem } from '@/app/subsystems'
+import type { BridgeSubsystem } from '@/app/subsystems/BridgeSubsystem'
 
 export type SubsystemMap = Record<string, IAppSubsystem<any>>
 
@@ -34,12 +37,50 @@ export class Application<SS extends SubsystemMap> implements AppBase {
   readonly role: Accessor<USER_ROLE>
   readonly setRole: (r: USER_ROLE) => void
 
+  // ── Context ────────────────────────────────────────────────────────────────
+  readonly jsVersion: string
+  readonly ua: string
+  readonly launchUrl: string
+  readonly isWeb: boolean
+  readonly isPC: boolean
+  readonly isIOS: boolean
+  readonly isAndroid: boolean
+  readonly isHybrid: boolean
+  private _appVersion: string | null = null
+
+  get appVersion (): string | null { return this._appVersion }
+
+  /** Returns a frozen snapshot of the current runtime context. */
+  context (): Readonly<AppContext> {
+    return Object.freeze({
+      jsVersion: this.jsVersion,
+      ua: this.ua,
+      launchUrl: this.launchUrl,
+      isWeb: this.isWeb,
+      isPC: this.isPC,
+      isIOS: this.isIOS,
+      isAndroid: this.isAndroid,
+      isHybrid: this.isHybrid,
+      appVersion: this._appVersion,
+    })
+  }
+
+  /**
+   * Manually set the native app version.
+   * Use when the version is retrieved outside of `boot()`, e.g. from a
+   * deferred bridge call or a custom native message handler.
+   */
+  setAppVersion (version: string): void {
+    this._appVersion = version
+  }
+
   private readonly _systems: SS
   private _bootPromise: Promise<void> | null = null
 
   constructor (systems: SS) {
     this._systems = systems
 
+    // ── Locale ──────────────────────────────────────────────────────────────
     // Locale is a core concern shared by i18n, request layer, and subsystems.
     const saved = localGet(LOCAL_USER_KEYS.LOCALE) || readSystemLang() || defaultLang
     const [locale, setLocale] = createSignal<string>(saved)
@@ -49,11 +90,34 @@ export class Application<SS extends SubsystemMap> implements AppBase {
       setLocale(lang)
     }
 
+    // ── Role ────────────────────────────────────────────────────────────────
     // Role starts as anonymous — AccountSubsystem.init() will restore
     // the correct value from any persisted session.
     const [role, setRole] = createSignal<USER_ROLE>(USER_ROLE.PASSENGER)
     this.role = role
     this.setRole = setRole
+
+    // ── Context ─────────────────────────────────────────────────────────────
+    // All static environment fields are captured once here, before any
+    // subsystem initialises, so they are available immediately.
+    const ua = navigator.userAgent
+    const isIOS = /\(i[^;]+;( U;)? CPU.+Mac OS X/.test(ua)
+    const isAndroid = ua.includes('Android') || (!isIOS && ua.includes('Linux'))
+    this.ua = ua
+    this.isIOS = isIOS
+    this.isAndroid = isAndroid
+    this.isPC = !isIOS && !isAndroid
+    this.jsVersion = import.meta.env.VITE_APP_VERSION ?? ''
+    this.launchUrl = window.location.href
+
+    const w = window as unknown as Record<string, unknown>
+    const iosHandlers = (w['webkit'] as Record<string, unknown> | undefined)?.['messageHandlers'] as
+      Record<string, unknown> | undefined
+    const isHybrid =
+      (iosHandlers !== null && iosHandlers !== undefined && typeof iosHandlers['bridge'] !== 'undefined') ||
+      typeof w['__bridge'] !== 'undefined'
+    this.isHybrid = isHybrid
+    this.isWeb = !isHybrid
 
     // Attach every subsystem as a direct property so callers can write
     // `application.account.login()` rather than `application.use('account').login()`.
@@ -88,6 +152,21 @@ export class Application<SS extends SubsystemMap> implements AppBase {
     for (const system of Object.values(this._systems)) {
       await system.init?.(this as unknown as ApplicationInstance<SS>)
     }
+
+    // If a BridgeSubsystem is registered and available, enrich appVersion
+    // with the native host version. Failure is silently ignored.
+    if (this.isHybrid) {
+      const bridge = (this._systems as Record<string, unknown>)['bridge'] as
+        Pick<BridgeSubsystem, 'isAvailable' | 'call'> | undefined
+      if (bridge?.isAvailable) {
+        try {
+          const version = await bridge.call<string>('getAppVersion')
+          if (version) this._appVersion = version
+        } catch {
+          // Bridge responded with an error or method is not implemented — non-fatal.
+        }
+      }
+    }
   }
 }
 
@@ -108,6 +187,8 @@ export class Application<SS extends SubsystemMap> implements AppBase {
  *
  * application.account.login(userData)
  * application.bridge.call('getToken')
+ * application.isHybrid   // top-level context
+ * application.appVersion // top-level context
  * await application.ready()
  * ```
  */
