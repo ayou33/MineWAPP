@@ -13,23 +13,25 @@
  *   3. The new subsystem is immediately accessible as `application.<key>`.
  */
 import { createApplication } from './AppCore'
-import { AccountSubsystem, ApiSchemaSubsystem, BridgeSubsystem, ReportSubsystem } from '@/app/subsystems'
+import { AccountSubsystem, ApiSchemaSubsystem, BridgeSubsystem, ContextSubsystem, ReportSubsystem } from '@/app/subsystems'
 
 export type { AppUser } from './subsystems/AccountSubsystem'
 export type { ApplicationInstance } from './AppCore'
-// Export ISocket so consumers can write their own adapters without importing
-// from the subsystem path directly.
 export type { ISocket, SocketState } from './subsystems/SocketSubsystem'
+export type { AppContext } from './subsystems/ContextSubsystem'
 
 const application = createApplication({
+  /** Hybrid JSBridge: RPC calls to native iOS/Android host. */
+  bridge: new BridgeSubsystem(),
+
+  /** Runtime environment context — platform, UA, hybrid mode, app version. */
+  context: new ContextSubsystem(),
+
   /** User session, system role, permissions — login / logout / guest. */
   account: new AccountSubsystem(),
 
   /** Field-mapping tables: decode server payloads, encode request params. */
   schema: new ApiSchemaSubsystem(),
-
-  /** Hybrid JSBridge: RPC calls to native iOS/Android host. */
-  bridge: new BridgeSubsystem(),
 
   /** Error capture, analytics events, batched tracking. */
   report: new ReportSubsystem(),
