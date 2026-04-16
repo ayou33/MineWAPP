@@ -7,10 +7,10 @@
   <link rel="shortcut icon" type="image/png" href="/assets/img/logo.png" />
   <title>%VITE_APP_TITLE%</title>
 </head>
-<body class="select-none bg-theme-primary text-white text-[0.875rem]">
+<body class="select-none bg-theme-primary">
 <noscript>You need to enable JavaScript to run this app.</noscript>
 <div id="loading">
-  <div class="mx-auto h-6 w-6 aspect-square rounded-full border-solid border-2 border-l-transparent align-middle animate-spin"></div>
+  <div class="loading"></div>
   <style>
     #loading {
       position: absolute;
@@ -20,6 +20,24 @@
       align-items: center;
       justify-content: center;
       background-color: var(--theme-primary, #2E60F9);
+    }
+    
+    .loading {
+      margin: auto;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 0, 0, .33);
+      border-left-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </div>

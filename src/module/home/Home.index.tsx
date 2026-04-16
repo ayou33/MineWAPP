@@ -16,7 +16,7 @@ export default function Home () {
         <A href="/about" class="px-6 py-3 bg-theme-primary text-white rounded-lg shadow hover:opacity-90 transition">
           {t('nav.about')}
         </A>
-        <Icon name="twitter" size="2rem" />
+        <Icon name="twitter" />
       </div>
 
       <div class="mt-16 text-sm text-gray-400">

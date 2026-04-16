@@ -1,6 +1,18 @@
 @use "./var.scss";
 @use "./transition.scss";
 
+@font-face {
+  font-family: font-app;
+  src: url("font/HarmonyOS_Sans_Regular.woff2") format("woff2");
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: font-app-black;
+  src: url("font/HarmonyOS_Sans_Black.woff2") format("woff2");
+  font-weight: bold;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -11,7 +23,7 @@ html, body {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: font-app, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Scrollbar styling */
