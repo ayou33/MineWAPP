@@ -1,7 +1,7 @@
 import { randomStr, uuidV4 } from '@/common'
 import { logFor } from '@/common/log'
 import { cancelToasts, toast as _toast } from '@/components/tips/Tips'
-import { AUTH_SCOPE } from '@/config'
+import { AUTH_ROLE } from '@/config'
 import PageGuard from '@/provider/scopedPage/PageGuard'
 import useRequest from '@/hooks/useRequest'
 import useTimer from '@/hooks/useTimer'
@@ -53,7 +53,7 @@ function pub (ns: string) {
   }
 }
 
-export default function ScopedPage (pageProps: FlowProps<{ scope?: AUTH_SCOPE, pageCode?: string }, ValidComponent>) {
+export default function ScopedPage (pageProps: FlowProps<{ scope?: AUTH_ROLE, pageCode?: string }, ValidComponent>) {
   const pageId = uuidV4()
   const pageName = randomStr()
   

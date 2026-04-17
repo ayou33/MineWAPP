@@ -42,7 +42,7 @@
  * }
  * ```
  */
-import type { IAppSubsystem } from './types'
+import type { IAppSubsystem } from '../types'
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -90,22 +90,28 @@ export class SocketSubsystem implements IAppSubsystem {
   readonly name = 'socket'
 
   private readonly _sockets: Map<string, ISocket>
+  private readonly _autoConnect: boolean
 
   /**
    * @param input A single `ISocket` (registered as `'main'`) or a map of
    *   named sockets `{ [name]: ISocket }`.
+   * @param autoConnect When `true`, all sockets connect immediately during `init()`.
+   *   Defaults to `false` — most apps need an auth token before connecting,
+   *   so you should call `connect()` / `add()` manually after login.
    */
-  constructor (input: ISocket | SocketMap) {
+  constructor (input: ISocket | SocketMap, autoConnect = false) {
     this._sockets = new Map(
       isISocket(input)
         ? [[DEFAULT, input]]
         : Object.entries(input),
     )
+    this._autoConnect = autoConnect
   }
 
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   async init (): Promise<void> {
+    if (!this._autoConnect) return
     for (const [, socket] of this._sockets) {
       await socket.connect()
     }
@@ -130,14 +136,16 @@ export class SocketSubsystem implements IAppSubsystem {
   }
 
   /**
-   * Register a new named connection at runtime and immediately connect it.
+   * Register a new named connection at runtime.
+   * By default the socket is immediately connected. Pass `connect: false` to
+   * register without connecting (e.g. to set up listeners before opening).
    * If a socket already exists under `name`, it is disconnected and replaced.
    */
-  async add (name: string, socket: ISocket): Promise<void> {
+  async add (name: string, socket: ISocket, connect = true): Promise<void> {
     const existing = this._sockets.get(name)
     if (existing) existing.disconnect()
     this._sockets.set(name, socket)
-    await socket.connect()
+    if (connect) await socket.connect()
   }
 
   /**

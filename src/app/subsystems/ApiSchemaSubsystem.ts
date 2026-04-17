@@ -1,6 +1,10 @@
 /**
  * ApiSchemaSubsystem — Field-mapping and response decoding.
  *
+ * ⚠️  This is a **standalone utility**, not an Application subsystem.
+ *     Instantiate it directly where needed, or integrate its logic into
+ *     `request.config.ts` → `responseParser` for global decoding.
+ *
  * Responsibilities:
  *  - Store per-namespace field-name translation tables (server key → app key).
  *  - Decode raw server payloads into app-friendly shapes.
@@ -9,21 +13,24 @@
  *
  * Usage:
  *  ```ts
- *  // Register a mapping at startup:
- *  application.schema.register('order', { orderId: 'id', orderStatus: 'status' })
+ *  const schema = new ApiSchemaSubsystem()
+ *
+ *  // Register a mapping:
+ *  schema.register('order', { orderId: 'id', orderStatus: 'status' })
  *
  *  // Decode a server response:
- *  const order = application.schema.decode<Order>('order', rawPayload)
+ *  const order = schema.decode<Order>('order', rawPayload)
  *
  *  // Load all mappings from a remote config file:
- *  await application.schema.loadFromUrl('/api/schema/field-map.json')
+ *  await schema.loadFromUrl('/api/schema/field-map.json')
  *  ```
  */
-import type { IAppSubsystem } from './types'
+import type { IAppSubsystem } from '../types'
 
 export type FieldMap = Record<string, string>
 
-export class ApiSchemaSubsystem implements IAppSubsystem {
+export class ApiSchemaSubsystem {
+  // Standalone utility — no lifecycle management needed.
   readonly name = 'schema'
 
   private readonly _maps = new Map<string, FieldMap>()
@@ -97,7 +104,4 @@ export class ApiSchemaSubsystem implements IAppSubsystem {
       this.register(namespace, fieldMap)
     }
   }
-
-  // IAppSubsystem — no init logic needed
-  init (): void {}
 }

@@ -6,47 +6,87 @@
  *  - Provide a `track(name, params)` API for custom analytics events.
  *  - Batch events and flush them periodically (or on dispose) to the
  *    analytics endpoint.
- *  - Automatically annotate events with the current user ID when available.
+ *  - Optionally annotate events with the current user ID via a lazy accessor
+ *    supplied at construction time (no direct coupling to AccountSubsystem).
  *
- * In production, replace the commented `fetch` call in `_flush` with your
+ * In production, replace the commented `fetch` call in `flush` with your
  * actual analytics endpoint (Mixpanel, Firebase, custom, etc.).
+ *
+ * @example
+ * // In application.ts — wire the userId accessor without importing AccountSubsystem:
+ * const account = new AccountSubsystem()
+ * const report  = new ReportSubsystem({ getUserId: () => account.current()?.['userId'] })
  */
-import type { AppBase, IAppSubsystem } from './types'
-import type { AccountSubsystem } from './AccountSubsystem'
+import type { IAppSubsystem } from '../types'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type TrackEvent = {
   name: string
   params?: Record<string, unknown>
-  userId?: string | number
+  userId?: unknown
   timestamp: number
 }
 
-interface AppWithAccount extends AppBase {
-  account: AccountSubsystem
+export type ReportOptions = {
+  /**
+   * Flush interval in milliseconds. Defaults to 10 000 ms.
+   * Adjust to balance latency against request volume.
+   */
+  flushIntervalMs?: number
+  /**
+   * Optional lazy accessor that returns the current user's ID.
+   * Called at the moment each event is tracked — no need to update on login/logout.
+   * Keep it lightweight (a simple property read is ideal).
+   *
+   * @example
+   * getUserId: () => account.current()?.['userId']
+   */
+  getUserId?: () => unknown
 }
 
-const FLUSH_INTERVAL_MS = 3_000
+const DEFAULT_FLUSH_INTERVAL_MS = 10_000
 
-export class ReportSubsystem implements IAppSubsystem<AppWithAccount> {
+// ─── ReportSubsystem ──────────────────────────────────────────────────────────
+
+export class ReportSubsystem implements IAppSubsystem {
   readonly name = 'report'
 
-  private _accountSys: AccountSubsystem | null = null
+  private readonly _getUserId: (() => unknown) | undefined
   private readonly _queue: TrackEvent[] = []
   private _timer: ReturnType<typeof setTimeout> | null = null
+  private readonly _flushInterval: number
+
+  // Bound handler refs — stored so dispose() can remove the exact same functions.
+  private readonly _onError: (e: ErrorEvent) => void
+  private readonly _onUnhandledRejection: (e: PromiseRejectionEvent) => void
+
+  constructor (options: ReportOptions = {}) {
+    this._flushInterval = options.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS
+    this._getUserId = options.getUserId
+    this._onError = (e: ErrorEvent) => {
+      this.captureError(
+        e.error instanceof Error ? e.error : new Error(e.message),
+        { filename: e.filename, lineno: e.lineno, colno: e.colno },
+      )
+    }
+    this._onUnhandledRejection = (e: PromiseRejectionEvent) => {
+      const err = e.reason instanceof Error ? e.reason : new Error(String(e.reason))
+      this.captureError(err)
+    }
+  }
 
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
-  init (app: AppWithAccount): void {
-    this._accountSys = app.account
-    this._attachGlobalHandlers()
+  init (): void {
+    window.addEventListener('error', this._onError)
+    window.addEventListener('unhandledrejection', this._onUnhandledRejection)
   }
 
   dispose (): void {
     this.flush()
-    if (this._timer !== null) {
-      clearTimeout(this._timer)
-      this._timer = null
-    }
+    window.removeEventListener('error', this._onError)
+    window.removeEventListener('unhandledrejection', this._onUnhandledRejection)
   }
 
   // ─── Public API ────────────────────────────────────────────────────────────
@@ -56,7 +96,7 @@ export class ReportSubsystem implements IAppSubsystem<AppWithAccount> {
     const event: TrackEvent = {
       name,
       params,
-      userId: this._accountSys?.current()?.userId,
+      userId: this._getUserId?.(),
       timestamp: Date.now(),
     }
     this._queue.push(event)
@@ -76,12 +116,19 @@ export class ReportSubsystem implements IAppSubsystem<AppWithAccount> {
     })
   }
 
-  /** Immediately send all queued events (bypasses the debounce timer). */
+  /**
+   * Immediately send all queued events and cancel any pending scheduled flush.
+   * Safe to call manually at any time (e.g. before navigation or on page hide).
+   */
   flush (): void {
+    // Always cancel the debounce timer — whether or not there are events to send.
+    if (this._timer !== null) {
+      clearTimeout(this._timer)
+      this._timer = null
+    }
     if (!this._queue.length) return
 
     const events = this._queue.splice(0)
-    this._timer = null
 
     if (import.meta.env.PROD) {
       // Replace with your analytics endpoint:
@@ -100,23 +147,6 @@ export class ReportSubsystem implements IAppSubsystem<AppWithAccount> {
 
   private _scheduleFlush (): void {
     if (this._timer !== null) return
-    this._timer = setTimeout(() => this.flush(), FLUSH_INTERVAL_MS)
-  }
-
-  private _attachGlobalHandlers (): void {
-    window.addEventListener('error', (e) => {
-      this.captureError(
-        e.error instanceof Error ? e.error : new Error(e.message),
-        { filename: e.filename, lineno: e.lineno, colno: e.colno },
-      )
-    })
-
-    window.addEventListener('unhandledrejection', (e) => {
-      const err = e.reason instanceof Error
-        ? e.reason
-        : new Error(String(e.reason))
-      this.captureError(err)
-    })
+    this._timer = setTimeout(() => this.flush(), this._flushInterval)
   }
 }
-

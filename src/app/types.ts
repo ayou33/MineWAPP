@@ -6,7 +6,7 @@
  * This keeps coupling explicit and type-safe without a circular dependency.
  */
 import type { Accessor } from 'solid-js'
-import type { USER_ROLE } from '@/config'
+import type { AUTH_ROLE } from '@/config'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -64,9 +64,46 @@ export interface AppBase {
    *   GUEST     — temporary / trial session
    *   USER+     — authenticated user
    */
-  readonly role: Accessor<USER_ROLE>
+  readonly role: Accessor<AUTH_ROLE>
   /** Update the system-level role. Called by AccountSubsystem on session changes. */
-  setRole(r: USER_ROLE): void
+  setRole(r: AUTH_ROLE): void
+  /**
+   * Retrieve a registered subsystem by its key name.
+   * Useful for optional/dynamic dependencies — avoids hard-coding the full
+   * `AppBase & { account: AccountSubsystem }` intersection type.
+   *
+   * @throws If no subsystem is registered under `name`.
+   *
+   * @example
+   * // In a subsystem that optionally uses account — no direct import needed:
+   * const account = app.use<AccountSubsystem>('account')
+   * account.current()?.['userId']
+   */
+  use<T extends IAppSubsystem>(name: string): T
+
+  /**
+   * Subscribe to system-level role changes.
+   * Returns an unsubscribe function. Useful for subsystems that need to react
+   * to login/logout without coupling directly to AccountSubsystem.
+   *
+   * @example
+   * // In SocketSubsystem.init():
+   * app.onRole(role => {
+   *   if (role >= USER_ROLE.USER) this.connect()
+   *   else this.disconnect()
+   * })
+   */
+  onRole(handler: (role: AUTH_ROLE) => void): () => void
+  /**
+   * Subscribe to locale changes.
+   * Returns an unsubscribe function.
+   */
+  onLocale(handler: (lang: string) => void): () => void
+  /**
+   * Reactive signal — `true` once all subsystems have finished `init()`.
+   * Use to gate rendering or defer work until the app is fully ready.
+   */
+  readonly isReady: Accessor<boolean>
   ready(): Promise<void>
 
   // ── Context (top-level, captured at construction) ──────────────────────────
@@ -107,7 +144,17 @@ export interface AppBase {
 export interface IAppSubsystem<AppT extends AppBase = AppBase> {
   /** Unique identifier — used for logging and debugging. */
   readonly name: string
-  /** Called once during `Application.boot()`, in registration order. */
+  /**
+   * Initialization priority. Lower values run first.
+   * Subsystems with the same priority initialize in registration order.
+   *
+   * Built-in priority tiers:
+   *   -100  BridgeSubsystem (native handshake — must resolve isHybrid first)
+   *    -50  ConfigSubsystem (remote config — available to all later subsystems)
+   *      0  (default) all other subsystems
+   */
+  readonly priority?: number
+  /** Called once during `Application.boot()`, in priority then registration order. */
   init?(app: AppT): void | Promise<void>
   /** Called when the application is torn down (e.g. in tests or SSR). */
   dispose?(): void | Promise<void>

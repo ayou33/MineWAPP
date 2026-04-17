@@ -20,7 +20,7 @@
  */
 
 import { emit } from '@/common/event'
-import { EVENTS, USER_ROLE } from '@/config'
+import { EVENTS, AUTH_ROLE } from '@/config'
 import application from '@/app/application'
 import { AxiosResponse } from 'axios'
 
@@ -143,7 +143,7 @@ export function responseParser<T> (url: string, resp: AxiosResponse<ServerRespon
   // Expired session: emit global event so the app can redirect to login.
   if (body.errorCode === ERROR_CODE.TOKEN_EXPIRED) {
     // Guest / trial sessions silently ignore token errors.
-    if (application.role() === USER_ROLE.GUEST) {
+    if (application.role() === AUTH_ROLE.GUEST) {
       return null as T
     }
     emit(EVENTS.TOKEN_ERROR)

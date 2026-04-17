@@ -16,9 +16,9 @@ export default function Home () {
         <A href="/about" class="px-6 py-3 bg-theme-primary text-white rounded-lg shadow hover:opacity-90 transition">
           {t('nav.about')}
         </A>
-        <Icon name="twitter" />
+        <Icon name="sunny-loop" size={24} />
       </div>
-
+      
       <div class="mt-16 text-sm text-gray-400">
         SolidJS + Vite + TailwindCSS
       </div>

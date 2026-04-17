@@ -21,7 +21,7 @@
  *  Reply to a `call()`:    { c, d, callId }   — callId routes to the pending promise
  *  Native-initiated push:  { c, d, method }   — method routes to registered listeners
  */
-import type { AppBase, IAppSubsystem } from '../types'
+import type { AppBase, IAppSubsystem } from '../../types'
 
 type PendingCall = { resolve(v: unknown): void; reject(e: unknown): void }
 
@@ -54,6 +54,8 @@ type BridgeConnection = {
 
 export class BridgeSubsystem implements IAppSubsystem {
   readonly name = 'bridge'
+  /** Run before all other subsystems — native handshake must complete first. */
+  readonly priority = -100
 
   private _available = false
   private _connection: BridgeConnection | null = null

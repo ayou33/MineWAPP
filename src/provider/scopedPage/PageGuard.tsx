@@ -6,25 +6,25 @@
  *
  */
 import application from '@/app/application'
-import { AUTH_PATH, AUTH_SCOPE } from '@/config'
+import { AUTH_PATH, AUTH_ROLE } from '@/config'
 import { t } from '@/features/i18n'
 import { useNavigate } from '@solidjs/router'
 import { createEffect, JSX, ParentProps, Show } from 'solid-js'
 
-export default function PageGuard (props: ParentProps<{ scope?: AUTH_SCOPE }>) {
+export default function PageGuard (props: ParentProps<{ scope?: AUTH_ROLE }>) {
   const navigate = useNavigate()
-  const scope = () => props.scope ?? AUTH_SCOPE.PUBLIC
+  const scope = () => props.scope ?? AUTH_ROLE.PASSENGER
 
   createEffect(() => {
-    if (application.role() < AUTH_SCOPE.PRIVATE && scope() >= AUTH_SCOPE.PRIVATE) {
+    if (application.role() < AUTH_ROLE.USER && scope() >= AUTH_ROLE.USER) {
       navigate(AUTH_PATH, { replace: true })
     }
   })
 
   const is403 = () =>
-    application.role() >= AUTH_SCOPE.PRIVATE &&
+    application.role() >= AUTH_ROLE.USER &&
     application.role() < scope() &&
-    scope() >= AUTH_SCOPE.AUTHED
+    scope() >= AUTH_ROLE.AUTHED
 
   return (
     <Show when={!is403()} fallback={<Forbidden />}>

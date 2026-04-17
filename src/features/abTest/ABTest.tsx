@@ -35,15 +35,16 @@ export default function ABTest (props: {
   fallback?: JSX.Element;
 }>) {
   const [local, rest] = splitProps(props, ['feature'])
+  const userGroup = application.account.current()?.group as number | undefined
   
   // 动态加载
   if (rest.load) {
-    return <Alternative {...rest} static by={() => ifFeatureAllowed(local.feature, application.account.group())} load={rest.load} />
+    return <Alternative {...rest} static by={() => ifFeatureAllowed(local.feature, userGroup)} load={rest.load} />
   }
   
   // 静态加载
   return (
-    <Show when={ifFeatureAllowed(local.feature, application.account.group())} fallback={rest.fallback}>
+    <Show when={ifFeatureAllowed(local.feature, userGroup)} fallback={rest.fallback}>
       {rest.children}
     </Show>
   )

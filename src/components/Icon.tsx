@@ -4,8 +4,18 @@ import classNames from 'classnames'
 type IconsProps = {
   name: string
   set?: string
+  size?: number | string
+  color?: string
 }
 
 export default function Icon (props: InheritProps<IconsProps>) {
-  return <I icon={`${props.set ?? 'line-md'}:${props.name}`} class={classNames(props.class)} style={props.style} />
+  return (
+    <I
+      icon={`${props.set ?? 'line-md'}:${props.name}`}
+      class={classNames(props.class)}
+      width={props.size as string}
+      height={props.size as string}
+      style={{ ...(props.color ? { color: props.color } : {}), ...(props.style || {}) }}
+    />
+  )
 }
