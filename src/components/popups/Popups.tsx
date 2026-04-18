@@ -1,11 +1,13 @@
 import { uuidV4 } from '@/common'
 import { isGT0 } from '@/common/predications'
 import Popup from '@/components/popups/Popup'
-import { ONE } from '@/config'
+import PCPopupShell from '@/components/popups/PCPopupShell'
+import { isPC, ONE } from '@/config'
 import { useIsRouting, useLocation } from '@solidjs/router'
+import classNames from 'classnames'
 import { stateQueue, TaskMeta, TaskRunType } from 'lunzi'
 import * as R from 'ramda'
-import { createEffect, createSignal, For, on, onCleanup, Show, ValidComponent } from 'solid-js'
+import { createEffect, createSignal, For, on, onCleanup, ParentProps, Show, ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { Transition, TransitionGroup } from 'solid-transition-group'
 
@@ -15,6 +17,13 @@ export type PopupProps<T = unknown, TResult = unknown> = {
 
 export type PopupOptions<T extends Record<string, unknown> | undefined = undefined> = {
   immediate?: boolean;
+  /** Title shown in the PC title bar (optional). */
+  title?: string;
+  /**
+   * PC only — the click / pointer event that triggered the popup.
+   * When provided the open/close animation originates from the event coordinates.
+   */
+  originEvent?: Pick<MouseEvent, 'clientX' | 'clientY'>;
   meta?: Partial<TaskMeta>;
   props?: {
     onClose?: VoidFn;
@@ -35,6 +44,9 @@ type QueueItem = {
   component: ValidComponent,
   next: (result?: unknown) => void,
   props?: Data;
+  title?: string;
+  /** Viewport coordinates of the event origin for PC expand animation. */
+  originPoint?: { x: number; y: number };
 }
 
 const queue = stateQueue()
@@ -48,7 +60,13 @@ createEffect(on(popups, (value, _, prev) => {
 }), [])
 
 const defaultPopupOptions: PopupOptions = {
-  immediate: false,
+  // On PC, popups are modal dialogs that can coexist without serialisation —
+  // multiple dialogs can stack naturally (z-index layering). Bypassing the queue
+  // (TaskRunType.IMMEDIATE) means the dialog appears at once rather than waiting
+  // for any previous popup to close first.
+  // On mobile, popups are full-screen sheets that compete for the entire viewport,
+  // so the queue ensures only one is shown at a time (TaskRunType.AUTO).
+  immediate: isPC,
 }
 
 export function popup<
@@ -81,6 +99,10 @@ export function popup<
           label,
           component,
           props: filledOptions.props,
+          title: filledOptions.title,
+          originPoint: filledOptions.immediate && filledOptions.originEvent
+            ? { x: filledOptions.originEvent.clientX, y: filledOptions.originEvent.clientY }
+            : undefined,
           next: (result?: unknown) => {
             setPopups(prev => prev.filter(item => item.id !== id))
             filledOptions.props?.onClose?.()
@@ -105,6 +127,18 @@ export function popup<
 export function cancelPopups (idOrLabel: string) {
   queue.cancel(idOrLabel)
   setPopups(prev => prev.filter(item => item.label !== idOrLabel && item.id !== idOrLabel))
+}
+
+/**
+ * Lay out popup action buttons.
+ * On PC: right-aligned (`justify-end`). On mobile: start-aligned.
+ */
+export function PopupActions (props: ParentProps<{ class?: string }>) {
+  return (
+    <div class={classNames('flex gap-3', isPC ? 'justify-end' : 'justify-start', props.class)}>
+      {props.children}
+    </div>
+  )
 }
 
 export default function Popups () {
@@ -137,12 +171,27 @@ export default function Popups () {
   
   return (
     <>
-      <TransitionGroup name="rise-reverse" onExit={forceRemove} onAfterExit={onRemoved}>
+      <TransitionGroup name={isPC ? 'popup-pc' : 'rise-reverse'} onExit={forceRemove} onAfterExit={onRemoved}>
         <For each={popups()}>
           {(item, index) =>
-            <Popup id={item.id} style={{ 'z-index': index() + 2 }}>
+            <Popup
+              id={item.id}
+              style={{
+                'z-index': index() + 2,
+                ...(isPC && item.originPoint
+                  ? { '--popup-ox': `${item.originPoint.x}px`, '--popup-oy': `${item.originPoint.y}px` }
+                  : {}),
+              }}
+            >
               <Show when={!isRouting()}>
-                <Dynamic component={item.component} close={item.next} {...item.props} />
+                {isPC
+                  ? (
+                    <PCPopupShell title={item.title} onClose={item.next}>
+                      <Dynamic component={item.component} close={item.next} {...item.props} />
+                    </PCPopupShell>
+                  )
+                  : <Dynamic component={item.component} close={item.next} {...item.props} />
+                }
               </Show>
             </Popup>
           }

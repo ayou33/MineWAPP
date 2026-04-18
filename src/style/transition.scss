@@ -43,6 +43,8 @@
 }
 
 /* ── Popup / TransitionGroup animations ── */
+
+/* Mobile: slide up from bottom */
 .rise-reverse-enter-active,
 .rise-reverse-exit-active {
   transition: transform var(--transition-duration) var(--ease-back-in-out), opacity var(--transition-duration) var(--ease-back-in-out);
@@ -55,5 +57,38 @@
 
 .rise-reverse-exit-to {
   transform: translateY(100%);
+  opacity: 0;
+}
+
+/* PC: dialog scales from button click origin */
+/* Animation targets the dialog content (> *), NOT the full-screen wrapper.
+   transform-origin in dialog-local space: button_pos - (viewport_center - dialog_half)
+   = calc(--popup-ox - 50vw + 50%)  where 50% = half of dialog's own dimension */
+.popup-pc-enter-active > *,
+.popup-pc-exit-active > * {
+  transform-origin:
+    calc(var(--popup-ox, 50vw) - 50vw + 50%)
+    calc(var(--popup-oy, 50vh) - 50vh + 50%);
+}
+
+/* Enter: overshoot at end — popup "pops" into place (back-out) */
+.popup-pc-enter-active > * {
+  transition: transform var(--transition-duration) var(--ease-back-out),
+              opacity   var(--transition-duration) var(--ease-back-out);
+}
+
+/* Exit: slight hesitation before collapsing (back-in) */
+.popup-pc-exit-active > * {
+  transition: transform var(--transition-duration) var(--ease-back-in),
+              opacity   var(--transition-duration) var(--ease-back-in);
+}
+
+.popup-pc-enter > * {
+  transform: scale(0);
+  opacity: 0;
+}
+
+.popup-pc-exit-to > * {
+  transform: scale(0);
   opacity: 0;
 }
