@@ -2,8 +2,11 @@ import classNames from 'classnames'
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import type { JSX } from 'solid-js'
 import { alignClass, computeColWidthsPx, SELECTION_COL_W } from './Table.helpers'
-import { Checkbox, Pagination, PinIcon, SortIcon } from './Table.ui'
-import type { ColumnDef, TableState } from './types'
+import { ActionColHeaderMenu, DataColHeaderMenu } from './Table.menu'
+import { Checkbox, FilterActiveIcon, Pagination, SortIcon } from './Table.ui'
+import type { ColumnDef, GroupedRow, TableState } from './types'
+
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 export type TableProps<T extends Record<string, unknown>> = {
   table: TableState<T>
@@ -42,7 +45,8 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
   const visibleColumns = createMemo(() =>
     t.columns.filter(c => {
       const h = c.hidden
-      return typeof h === 'function' ? !h() : !h
+      const staticHidden = typeof h === 'function' ? h() : !!h
+      return !staticHidden && !t.hiddenKeys().includes(c.key)
     }),
   )
 
@@ -93,8 +97,15 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
     return last
   })
 
-  const hasFilters = createMemo(() => orderedColumns().some(c => c.filterable))
   const colSpan = createMemo(() => orderedColumns().length + (t.hasSelection ? 1 : 0))
+
+  // Title string of the current group-by column (for group header rows)
+  const groupColTitle = createMemo(() => {
+    const gk = t.groupKey()
+    if (!gk) return ''
+    const col = t.columns.find(c => c.key === gk)
+    return col ? (typeof col.title === 'string' ? col.title : gk) : gk
+  })
 
   function colStyle (col: ColumnDef<T>, idx: number): JSX.CSSProperties {
     const offsets = pinnedLeftOffsets()
@@ -141,50 +152,41 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
                 </th>
               </Show>
               <For each={orderedColumns()}>
-                {(col, i) => (
-                  <th
-                    class={classNames(
-                      'px-5 py-3 font-semibold text-xs whitespace-nowrap bg-c-table-header-bg text-c-text-muted group',
-                      alignClass(col.align), colZClass(col, true),
-                      col.sortable && 'cursor-pointer select-none hover:text-c-text',
-                    )}
-                    style={colStyle(col, i())}
-                    onClick={() => col.sortable && t.setSort(col.key)}
-                  >
-                    <span class="inline-flex items-center gap-1">
-                      {col.title}
-                      <Show when={col.sortable}>
-                        <SortIcon dir={t.sort()?.key === col.key ? t.sort()!.dir : null} />
-                      </Show>
-                      <Show when={!col.fixed}>
-                        <button
-                          class={classNames('transition-opacity text-c-text-subtle hover:text-md-primary',
-                            t.pinnedKeys().includes(col.key) ? 'opacity-100 text-md-primary' : 'opacity-0 group-hover:opacity-100')}
-                          onClick={e => { e.stopPropagation(); if (t.pinnedKeys().includes(col.key)) { t.unpinColumn(col.key) } else { t.pinColumn(col.key) } }}
-                          title={t.pinnedKeys().includes(col.key) ? '取消固定' : '固定此列'}
-                        ><PinIcon active={t.pinnedKeys().includes(col.key)} /></button>
-                      </Show>
-                    </span>
-                  </th>
-                )}
+                {(col, i) => {
+                  const hasColFilter = () =>
+                    !!(t.filters()[col.key]?.trim()) ||
+                    (t.filterSelections()[col.key]?.length ?? 0) > 0
+                  return (
+                    <th
+                      class={classNames(
+                        'px-4 py-3 font-semibold text-xs whitespace-nowrap bg-c-table-header-bg group',
+                        alignClass(col.align), colZClass(col, true),
+                      )}
+                      style={{ ...colStyle(col, i()), color: 'var(--c-text-muted)' }}
+                    >
+                      <div class="flex items-center justify-between gap-1 min-w-0">
+                        {/* Title + active-state indicators */}
+                        <span class="flex items-center gap-1 min-w-0 flex-1 truncate">
+                          {col.title}
+                          <Show when={t.sort()?.key === col.key}>
+                            <SortIcon dir={t.sort()!.dir} />
+                          </Show>
+                          <Show when={hasColFilter()}>
+                            <FilterActiveIcon />
+                          </Show>
+                        </span>
+                        {/* Per-column menu or action-column settings menu */}
+                        <Show when={!col.isAction} fallback={
+                          <ActionColHeaderMenu table={t} />
+                        }>
+                          <DataColHeaderMenu col={col} table={t} />
+                        </Show>
+                      </div>
+                    </th>
+                  )
+                }}
               </For>
             </tr>
-            <Show when={hasFilters()}>
-              <tr class="bg-c-table-header-bg border-t border-c-table-border">
-                <Show when={t.hasSelection}>
-                  <td class="px-3 py-2 bg-c-table-header-bg z-overlay" style={selStyle()} />
-                </Show>
-                <For each={orderedColumns()}>
-                  {(col, i) => (
-                    <td class={classNames('px-5 py-2 bg-c-table-header-bg', colZClass(col, false))} style={colStyle(col, i())}>
-                      <Show when={col.filterable}>
-                        <input type="text" value={t.filters()[col.key] ?? ''} onInput={e => t.setFilter(col.key, (e.currentTarget as HTMLInputElement).value)} placeholder="Filter..." class="w-full px-2 py-1 text-xs rounded bg-c-surface text-c-text placeholder:text-c-text-subtle outline-none transition-colors" style={{ border: '1px solid var(--c-outline)' }} />
-                      </Show>
-                    </td>
-                  )}
-                </For>
-              </tr>
-            </Show>
           </thead>
 
           <tbody>
@@ -201,8 +203,20 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
               <Show when={t.displayData().length > 0} fallback={
                 <tr><td colspan={colSpan()} class="px-5 py-10 text-center text-c-text-subtle">{props.emptyText ?? '暂无数据'}</td></tr>
               }>
-                <For each={t.displayData()}>
-                  {(row, index) => {
+                <For each={t.groupedRows()}>
+                  {(item: GroupedRow<T>) => {
+                    if (item.type === 'group') {
+                      return (
+                        <tr class="border-t border-c-table-border" style={{ background: 'var(--c-table-header-bg)' }}>
+                          <td colspan={colSpan()} class="px-5 py-2 text-xs font-semibold" style={{ color: 'var(--c-text-muted)' }}>
+                            <span style={{ color: 'var(--c-text)' }}>{groupColTitle()}</span>
+                            <span class="mx-1.5" style={{ color: 'var(--c-text-subtle)' }}>/</span>
+                            <span>{item.value || '(空)'}</span>
+                          </td>
+                        </tr>
+                      )
+                    }
+                    const { row, index } = item
                     const key = t.rowKey(row)
                     const isSelected = () => t.selectedKeys().includes(key)
                     return (
@@ -213,15 +227,33 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
                           </td>
                         </Show>
                         <For each={orderedColumns()}>
-                          {(col, i) => (
-                            <td
-                              class={classNames('px-5 py-3.5', alignClass(col.align), colZClass(col, false),
-                                (col.fixed === 'left' || t.pinnedKeys().includes(col.key)) && (isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface'))}
-                              style={colStyle(col, i())}
-                            >
-                              {col.render ? col.render(row[col.key as keyof T & string], row, index()) : String(row[col.key] ?? '')}
-                            </td>
-                          )}
+                          {(col, i) => {
+                            const isCellActive = () =>
+                              t.activeCell()?.rowKey === key && t.activeCell()?.colKey === col.key
+                            const handleCellClick = () => {
+                              const cur = t.activeCell()
+                              t.setActiveCell(
+                                cur?.rowKey === key && cur?.colKey === col.key
+                                  ? null
+                                  : { rowKey: key, colKey: col.key },
+                              )
+                            }
+                            return (
+                              <td
+                                class={classNames(
+                                  'px-5 py-3.5 cursor-default transition-colors',
+                                  alignClass(col.align), colZClass(col, false),
+                                  (col.fixed === 'left' || t.pinnedKeys().includes(col.key))
+                                    && (isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface'),
+                                  isCellActive() && 'ring-2 ring-inset ring-md-primary',
+                                )}
+                                style={colStyle(col, i())}
+                                onClick={handleCellClick}
+                              >
+                                {col.render ? col.render(row[col.key as keyof T & string], row, index) : String(row[col.key] ?? '')}
+                              </td>
+                            )
+                          }}
                         </For>
                       </tr>
                     )
@@ -236,7 +268,7 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
 
       <Show when={t.hasPagination && t.total() > 0}>
         <div class={classNames('shrink-0', isLoading() && 'pointer-events-none')}>
-          <Pagination page={t.page} pageSize={t.pageSize} total={t.total} onPageChange={t.setPage} onPageSizeChange={t.setPageSize} pageSizeOptions={props.pageSizeOptions ?? [10, 20, 50, 100]} />
+          <Pagination page={t.page} pageSize={t.pageSize} total={t.total} onPageChange={t.setPage} onPageSizeChange={t.setPageSize} pageSizeOptions={props.pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS} />
         </div>
       </Show>
     </div>

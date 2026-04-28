@@ -57,6 +57,61 @@ export function PinIcon (props: { active: boolean }) {
   )
 }
 
+// --- ChevronDownIcon ---------------------------------------------------------
+
+export function ChevronDownIcon () {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M2 3.5L5 6.5L8 3.5" />
+    </svg>
+  )
+}
+
+// --- DotsVerticalIcon --------------------------------------------------------
+
+export function DotsVerticalIcon () {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+      <circle cx="6" cy="2.5" r="1.1" />
+      <circle cx="6" cy="6" r="1.1" />
+      <circle cx="6" cy="9.5" r="1.1" />
+    </svg>
+  )
+}
+
+// --- GroupIcon ---------------------------------------------------------------
+
+export function GroupIcon (props: { active: boolean }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
+      class={props.active ? 'text-md-primary' : undefined}>
+      <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1H5a1.5 1.5 0 0 1 1.5 1.5V5A1.5 1.5 0 0 1 5 6.5H2.5A1.5 1.5 0 0 1 1 5V2.5zm8 0A1.5 1.5 0 0 1 10.5 1H13a1.5 1.5 0 0 1 1.5 1.5V5A1.5 1.5 0 0 1 13 6.5h-2.5A1.5 1.5 0 0 1 9 5V2.5zM1 10.5A1.5 1.5 0 0 1 2.5 9H5a1.5 1.5 0 0 1 1.5 1.5V13A1.5 1.5 0 0 1 5 14.5H2.5A1.5 1.5 0 0 1 1 13v-2.5zm8 0A1.5 1.5 0 0 1 10.5 9H13a1.5 1.5 0 0 1 1.5 1.5V13a1.5 1.5 0 0 1-1.5 1.5h-2.5A1.5 1.5 0 0 1 9 13v-2.5z" />
+    </svg>
+  )
+}
+
+// --- ResetIcon ---------------------------------------------------------------
+
+export function ResetIcon () {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+      <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+    </svg>
+  )
+}
+
+// --- FilterActiveIcon --------------------------------------------------------
+
+export function FilterActiveIcon () {
+  return (
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
+      class="text-md-primary shrink-0">
+      <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z" />
+    </svg>
+  )
+}
+
 // --- Pagination helpers ------------------------------------------------------
 
 function buildPageNumbers (current: number, total: number): (number | null)[] {
