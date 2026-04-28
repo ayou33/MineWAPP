@@ -27,6 +27,13 @@ export type ColumnDef<T extends Record<string, unknown>> = {
   /** Custom cell renderer */
   render?: (value: T[keyof T & string], row: T, index: number) => JSXElement
   align?: ColumnAlign
+  /**
+   * When `true` (or an accessor returning `true`) the column is completely
+   * excluded from the rendered table — both the header cell and every body
+   * cell are omitted.  Useful for permission-gated columns such as an
+   * "操作" column that should disappear when the user has no actions.
+   */
+  hidden?: boolean | (() => boolean)
 }
 
 export type TableConfig<T extends Record<string, unknown>> = {
@@ -36,6 +43,18 @@ export type TableConfig<T extends Record<string, unknown>> = {
   rowKey?: (row: T) => string
   /** Enable built-in client-side pagination */
   pagination?: boolean
+  /**
+   * Enable server-side pagination mode. When true, `data` is expected to
+   * already contain only the current page's rows (no client-side slicing).
+   * Requires `externalTotal` to drive the pagination control correctly.
+   * Implies `pagination: true` for rendering purposes.
+   */
+  serverPagination?: boolean
+  /**
+   * Override the row count used by the pagination control.
+   * Required when `serverPagination` is true; ignored otherwise.
+   */
+  externalTotal?: Accessor<number>
   /** Enable row selection checkboxes */
   selection?: boolean
   /** Rows per page when pagination is enabled (default: 10) */
@@ -64,6 +83,10 @@ export type TableState<T extends Record<string, unknown>> = {
   isAllSelected: Accessor<boolean>
   isIndeterminate: Accessor<boolean>
 
+  /* ── Pin state ── */
+  /** Keys of dynamically pinned columns (added at runtime via pinColumn) */
+  pinnedKeys: Accessor<string[]>
+
   /* ── Actions ── */
   /** Toggle sort for a column: none → asc → desc → none */
   setSort: (key: string) => void
@@ -73,4 +96,9 @@ export type TableState<T extends Record<string, unknown>> = {
   toggleSelect: (key: string) => void
   toggleSelectAll: () => void
   clearSelection: () => void
+  /** Dynamically pin a column by key (no-op if already pinned or statically fixed) */
+  pinColumn: (key: string) => void
+  /** Unpin a dynamically pinned column */
+  unpinColumn: (key: string) => void
 }
+

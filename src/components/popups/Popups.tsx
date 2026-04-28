@@ -173,11 +173,11 @@ export default function Popups () {
     <>
       <TransitionGroup name={isPC ? 'popup-pc' : 'rise-reverse'} onExit={forceRemove} onAfterExit={onRemoved}>
         <For each={popups()}>
-          {(item, index) =>
+          {(item) =>
             <Popup
               id={item.id}
               style={{
-                'z-index': index() + 2,
+                'z-index': 'var(--z-index-popup)',
                 ...(isPC && item.originPoint
                   ? { '--popup-ox': `${item.originPoint.x}px`, '--popup-oy': `${item.originPoint.y}px` }
                   : {}),
@@ -199,7 +199,7 @@ export default function Popups () {
       </TransitionGroup>
       <Show when={isGT0(popups().length)}>
         <Transition name="fade" appear>
-          <div class="mask fixed inset-0 bg-black/80" style={{ 'z-index': popups().length }} />
+          <div class="mask fixed inset-0 bg-black/80" style={{ 'z-index': 'calc(var(--z-index-popup) - 1)' }} />
         </Transition>
       </Show>
     </>

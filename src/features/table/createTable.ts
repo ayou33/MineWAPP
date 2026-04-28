@@ -6,10 +6,14 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     columns,
     data,
     rowKey = (row: T) => String((row as Record<string, unknown>).id ?? JSON.stringify(row)),
-    pagination: hasPagination = false,
+    pagination: clientPagination = false,
+    serverPagination = false,
+    externalTotal,
     selection: hasSelection = false,
     defaultPageSize = 10,
   } = config
+
+  const hasPagination = clientPagination || serverPagination
 
   /* ── Signals ── */
   const [sort, _setSort] = createSignal<SortState>(null)
@@ -17,6 +21,7 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
   const [page, _setPage] = createSignal(1)
   const [pageSize, _setPageSize] = createSignal(defaultPageSize)
   const [selectedKeys, setSelectedKeys] = createSignal<string[]>([])
+  const [pinnedKeys, setPinnedKeys] = createSignal<string[]>([])
 
   /* ── Derived: filtered + sorted rows ── */
   const processedData = createMemo(() => {
@@ -47,11 +52,13 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     return rows
   })
 
-  const total = createMemo(() => processedData().length)
+  const total = createMemo(() => externalTotal?.() ?? processedData().length)
 
   /* ── Derived: paginated view ── */
   const displayData = createMemo(() => {
-    if (!hasPagination) return processedData()
+    // Server-side mode: data is already the current page — never slice
+    if (serverPagination) return processedData()
+    if (!clientPagination) return processedData()
     const start = (page() - 1) * pageSize()
     return processedData().slice(start, start + pageSize())
   })
@@ -119,6 +126,14 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     setSelectedKeys([])
   }
 
+  function pinColumn (key: string) {
+    setPinnedKeys(prev => prev.includes(key) ? prev : [...prev, key])
+  }
+
+  function unpinColumn (key: string) {
+    setPinnedKeys(prev => prev.filter(k => k !== key))
+  }
+
   return {
     columns,
     rowKey,
@@ -133,6 +148,7 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     displayData,
     isAllSelected,
     isIndeterminate,
+    pinnedKeys,
     setSort,
     setFilter,
     setPage,
@@ -140,5 +156,8 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     toggleSelect,
     toggleSelectAll,
     clearSelection,
+    pinColumn,
+    unpinColumn,
   }
 }
+

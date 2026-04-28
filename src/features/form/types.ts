@@ -33,7 +33,7 @@ export type FieldMeta = {
 /** Form configuration */
 export type FormConfig<T extends Record<string, any>> = {
   initialValues: T
-  rules?: Partial<{ [K in keyof T & string]: Rule<T[K]>[] }>
+  rules?: Partial<{ [K in keyof T & string]: Rule<T[K]> | Rule<T[K]>[] }>
   cascade?: Partial<{ [K in keyof T & string]: (value: T[K], ctx: CascadeContext<T>) => void }>
   relations?: Partial<{ [K in keyof T & string]: Relation<T, K> }>
   validateOn?: ValidateOn

@@ -1,10 +1,445 @@
-:root {
-  --theme-primary: #2E60F9;
-  --theme-secondary: #517BFF;
-  --theme-accent: #00C58A;
+/* ══════════════════════════════════════════════════════════════
+   Design Token System  —  MD3-aligned  (Light + Dark)
 
+   Layer 1:  --md-{role}           MD3 Color Role primitives
+   Layer 2:  --c-{component}-*     Semantic component tokens
+             (reference Layer 1; override in .dark)
+
+   Dark mode: add class="dark" to <html>
+══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Motion ── */
   --transition-duration: 500ms;
   --ease-back-in:     cubic-bezier(0.36, 0, 0.66, -0.56);   /* hesitates then accelerates */
   --ease-back-out:    cubic-bezier(0.34, 1.56, 0.64, 1);    /* overshoots then settles   */
   --ease-back-in-out: cubic-bezier(0.68, -0.25, 0.2, 1.2);  /* pull-back enter + overshoot exit */
+  /* standard decelerate — no overshoot, safe for width/height transitions */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ════════════════════════════
+     MD3 Color Roles — Light
+  ════════════════════════════ */
+
+  /* Primary (Blue) */
+  --md-primary:              #2E60F9;
+  --md-on-primary:           #FFFFFF;
+  --md-primary-container:    #D9E3FF;
+  --md-on-primary-container: #001753;
+
+  /* Secondary (Purple-Blue) */
+  --md-secondary:              #585ADB;
+  --md-on-secondary:           #FFFFFF;
+  --md-secondary-container:    #E3DFFF;
+  --md-on-secondary-container: #0F0068;
+
+  /* Tertiary (Purple accent) */
+  --md-tertiary:              #9600D2;
+  --md-on-tertiary:           #FFFFFF;
+  --md-tertiary-container:    #F5D9FF;
+  --md-on-tertiary-container: #2C0054;
+
+  /* Error */
+  --md-error:              #F64D4B;
+  --md-on-error:           #FFFFFF;
+  --md-error-container:    #FFDAD6;
+  --md-on-error-container: #410002;
+
+  /* Success */
+  --md-success:              #00C58A;
+  --md-on-success:           #FFFFFF;
+  --md-success-container:    #CCFFF0;
+  --md-on-success-container: #003826;
+
+  /* Warning */
+  --md-warning:              #FF9100;
+  --md-on-warning:           #FFFFFF;
+  --md-warning-container:    #FFDDB8;
+  --md-on-warning-container: #2D1600;
+
+  /* Background */
+  --md-background:    #FAF9FF;
+  --md-on-background: #201F29;
+
+  /* Surface */
+  --md-surface:            #FFFFFF;
+  --md-on-surface:         #201F29;
+  --md-surface-variant:    #E3E1EF;
+  --md-on-surface-variant: #46454F;
+
+  /* Tonal Surface Elevations (MD3 primary-tinted overlay model) */
+  --md-surface-1: #F4F2FC; /* +5%  primary tint */
+  --md-surface-2: #EDE9F8; /* +8%  */
+  --md-surface-3: #E5E1F5; /* +11% */
+  --md-surface-4: #E2DEF3; /* +12% */
+  --md-surface-5: #DBD7EF; /* +14% */
+
+  /* Outline */
+  --md-outline:         #777680;
+  --md-outline-variant: #C8C5D1;
+
+  /* Inverse (for snackbars / tooltips) */
+  --md-inverse-surface:    #322F3A;
+  --md-inverse-on-surface: #F3EFF8;
+  --md-inverse-primary:    #AFC6FF;
+
+  /* Scrim & Shadow */
+  --md-scrim:          rgba(0, 0, 0, 0.32);
+  --md-shadow-sm:      0 1px 2px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.06);
+  --md-shadow-md:      0 2px 4px rgba(0,0,0,0.08), 0 6px 20px rgba(0,0,0,0.08);
+  --md-shadow-lg:      0 4px 8px rgba(0,0,0,0.10), 0 16px 48px rgba(0,0,0,0.12);
+  --md-shadow-dialog:  0 8px 12px rgba(0,0,0,0.15), 0 24px 64px rgba(0,0,0,0.18);
+
+  /* ════════════════════════════
+     Semantic Component Tokens
+  ════════════════════════════ */
+
+  /* — Page — */
+  --c-bg:           var(--md-background);
+  --c-text:         var(--md-on-background);
+  --c-text-muted:   #585666;
+  --c-text-subtle:  #9494A4;
+  --c-text-disabled: #B1B1CC;
+
+  /* — Surface / Card — */
+  --c-surface:    var(--md-surface);
+  --c-surface-1:  var(--md-surface-1);
+  --c-surface-2:  var(--md-surface-2);
+  --c-surface-3:  var(--md-surface-3);
+  --c-on-surface: var(--md-on-surface);
+
+  /* — Divider / Outline — */
+  --c-outline:        var(--md-outline-variant);
+  --c-outline-strong: var(--md-outline);
+  --c-divider:        var(--md-outline-variant);
+
+  /* — Navigation Bar (sticky) — */
+  --c-nav-bg:              rgba(255, 255, 255, 0.75);
+  --c-nav-border:          rgba(0, 0, 0, 0.08);
+  --c-nav-shadow:          0 2px 20px rgba(0, 0, 0, 0.08);
+  --c-nav-text:            var(--md-on-surface-variant);
+  --c-nav-text-active:     var(--md-primary);
+  --c-nav-item-active-bg:  var(--md-primary-container);
+  /* frosted glass surfaces (tab bar card, etc.) */
+  --c-frosted-bg:          rgba(250, 249, 255, 0.72);
+  --c-frosted-outer-bg:    rgba(250, 249, 255, 0.60);
+
+  /* — Sidebar — */
+  --c-sidebar-bg:               var(--md-surface-1);
+  --c-sidebar-item-hover:        var(--md-surface-variant);
+  --c-sidebar-item-active-bg:    var(--md-primary-container);
+  --c-sidebar-item-active-text:  var(--md-on-primary-container);
+  --c-sidebar-divider:           var(--md-outline-variant);
+
+  /* — Button: Filled — */
+  --c-btn-filled-bg:       var(--md-primary);
+  --c-btn-filled-text:     var(--md-on-primary);
+  --c-btn-filled-hover-bg: #1C4CDD;
+  --c-btn-filled-shadow:   0 2px 8px rgba(46, 96, 249, 0.30);
+
+  /* — Button: Tonal (secondary action) — */
+  --c-btn-tonal-bg:   var(--md-primary-container);
+  --c-btn-tonal-text: var(--md-on-primary-container);
+
+  /* — Button: Outlined — */
+  --c-btn-outline-border: var(--md-outline);
+  --c-btn-outline-text:   var(--md-primary);
+
+  /* — Button: Text / Ghost — */
+  --c-btn-text-color: var(--md-primary);
+
+  /* — Button: Elevated — */
+  --c-btn-elevated-bg:     var(--md-surface-2);
+  --c-btn-elevated-text:   var(--md-primary);
+  --c-btn-elevated-shadow: var(--md-shadow-sm);
+
+  /* — Button: Semantic variants — */
+  --c-btn-danger-bg:    var(--md-error);
+  --c-btn-danger-text:  var(--md-on-error);
+  --c-btn-success-bg:   var(--md-success);
+  --c-btn-success-text: var(--md-on-success);
+  --c-btn-warning-bg:   var(--md-warning);
+  --c-btn-warning-text: var(--md-on-warning);
+
+  /* — Button: Disabled — */
+  --c-btn-disabled-bg:   rgba(0, 0, 0, 0.12);
+  --c-btn-disabled-text: rgba(0, 0, 0, 0.38);
+
+  /* — Form Input (Filled, MD3 default) — */
+  --c-input-bg:            var(--md-surface-variant);
+  --c-input-bg-hover:      #D8D6E6;
+  --c-input-indicator:     var(--md-on-surface-variant); /* bottom-border inactive */
+  --c-input-indicator-focus: var(--md-primary);
+  --c-input-indicator-error: var(--md-error);
+  --c-input-text:          var(--md-on-surface);
+  --c-input-placeholder:   var(--md-on-surface-variant);
+  --c-input-label:         var(--md-on-surface-variant);
+  --c-input-label-focus:   var(--md-primary);
+  --c-input-label-error:   var(--md-error);
+  --c-input-icon:          var(--md-on-surface-variant);
+  --c-input-helper:        var(--md-on-surface-variant);
+  --c-input-error-text:    var(--md-error);
+  --c-input-success-text:  var(--md-success);
+  --c-input-disabled-bg:   rgba(0, 0, 0, 0.04);
+  --c-input-disabled-text: rgba(0, 0, 0, 0.38);
+
+  /* — Form Input (Outlined variant) — */
+  --c-input-outlined-bg:            var(--md-surface);
+  --c-input-outlined-border:        var(--md-outline);
+  --c-input-outlined-border-focus:  var(--md-primary);
+  --c-input-outlined-border-error:  var(--md-error);
+
+  /* — Select / Dropdown / Combobox — */
+  --c-dropdown-bg:               var(--md-surface);
+  --c-dropdown-border:           var(--md-outline-variant);
+  --c-dropdown-shadow:           var(--md-shadow-md);
+  --c-dropdown-item-hover:       var(--md-surface-variant);
+  --c-dropdown-item-active-bg:   var(--md-primary-container);
+  --c-dropdown-item-active-text: var(--md-on-primary-container);
+
+  /* — Dialog / Modal / Drawer — */
+  --c-dialog-bg:     var(--md-surface);
+  --c-dialog-scrim:  var(--md-scrim);
+  --c-dialog-shadow: var(--md-shadow-dialog);
+  --c-dialog-border: var(--md-outline-variant);
+
+  /* — Tooltip — */
+  --c-tooltip-bg:   var(--md-inverse-surface);
+  --c-tooltip-text: var(--md-inverse-on-surface);
+
+  /* — Chip / Tag — */
+  --c-chip-bg:            var(--md-surface-variant);
+  --c-chip-text:          var(--md-on-surface-variant);
+  --c-chip-border:        var(--md-outline-variant);
+  --c-chip-selected-bg:   var(--md-primary-container);
+  --c-chip-selected-text: var(--md-on-primary-container);
+
+  /* — Badge / Notification dot — */
+  --c-badge-bg:   var(--md-error);
+  --c-badge-text: var(--md-on-error);
+
+  /* — Table / DataGrid — */
+  --c-table-header-bg:       var(--md-surface-1);
+  --c-table-header-text:     var(--md-on-surface);
+  --c-table-row-bg:          var(--md-surface);
+  --c-table-row-hover:       var(--md-surface-variant);
+  --c-table-row-selected-bg: var(--md-primary-container);
+  --c-table-border:          var(--md-outline-variant);
+
+  /* — Menu / Context Menu — */
+  --c-menu-bg:               var(--md-surface);
+  --c-menu-shadow:           var(--md-shadow-md);
+  --c-menu-item-hover:       var(--md-surface-variant);
+  --c-menu-item-active-bg:   var(--md-primary-container);
+  --c-menu-item-active-text: var(--md-on-primary-container);
+  --c-menu-divider:          var(--md-outline-variant);
+
+  /* — Tabs — */
+  --c-tab-indicator:    var(--md-primary);
+  --c-tab-text-active:  var(--md-primary);
+  --c-tab-text-inactive: var(--md-on-surface-variant);
+
+  /* — Switch / Toggle — */
+  --c-switch-track-on:     var(--md-primary);
+  --c-switch-track-off:    var(--md-outline);
+  --c-switch-thumb-on:     var(--md-on-primary);
+  --c-switch-thumb-off:    var(--md-surface);
+  --c-switch-thumb-border: var(--md-outline);
+
+  /* — Checkbox / Radio — */
+  --c-checkbox-checked:   var(--md-primary);
+  --c-checkbox-unchecked: var(--md-outline);
+  --c-checkbox-check:     var(--md-on-primary);
+  --c-radio-selected:     var(--md-primary);
+
+  /* — Progress Bar / Loader — */
+  --c-progress-track:     var(--md-surface-variant);
+  --c-progress-indicator: var(--md-primary);
+  --c-progress-buffer:    var(--md-primary-container);
+
+  /* — Skeleton — */
+  --c-skeleton-bg:    var(--md-surface-variant);
+  --c-skeleton-shine: rgba(255, 255, 255, 0.55);
+
+  /* — Snackbar / Toast — */
+  --c-snackbar-bg:     var(--md-inverse-surface);
+  --c-snackbar-text:   var(--md-inverse-on-surface);
+  --c-snackbar-action: var(--md-inverse-primary);
+
+  /* — Tip / Toast Notification types — */
+  --c-tip-info-bg:      var(--md-inverse-surface);
+  --c-tip-info-text:    var(--md-inverse-on-surface);
+  --c-tip-success-bg:   var(--md-success);
+  --c-tip-success-text: var(--md-on-success);
+  --c-tip-error-bg:     var(--md-error);
+  --c-tip-error-text:   var(--md-on-error);
+  --c-tip-warning-bg:   var(--md-warning);
+  --c-tip-warning-text: var(--md-on-warning);
+
+  /* — Chart / Data Visualization — */
+  --c-chart-1:       #2E60F9;
+  --c-chart-2:       #00C58A;
+  --c-chart-3:       #FF9100;
+  --c-chart-4:       #9600D2;
+  --c-chart-5:       #F64D4B;
+  --c-chart-6:       #517BFF;
+  --c-chart-grid:    var(--md-outline-variant);
+  --c-chart-label:   var(--md-on-surface-variant);
+  --c-chart-tooltip: var(--md-surface);
+
+  /* — Scrollbar — */
+  --c-scrollbar-thumb:       var(--md-outline-variant);
+  --c-scrollbar-thumb-hover: var(--md-outline);
+
+  /* — MD3 State Layer colors — */
+  --state-hover:    rgba(46, 96, 249, 0.08);
+  --state-focus:    rgba(46, 96, 249, 0.12);
+  --state-pressed:  rgba(46, 96, 249, 0.16);
+  --state-disabled: rgba(0, 0, 0, 0.12);
+
+  /* ── Backward-compat aliases — map old --theme-* to MD3 roles ── */
+  --theme-primary:   var(--md-primary);
+  --theme-secondary: var(--md-secondary);
+  --theme-accent:    var(--md-success);
+
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Dark Theme  —  add class="dark" to <html>
+══════════════════════════════════════════════════════════════ */
+
+.dark {
+
+  /* ── MD3 Color Roles — Dark ── */
+
+  --md-primary:              #AFC6FF;
+  --md-on-primary:           #002780;
+  --md-primary-container:    #1C4CDD;
+  --md-on-primary-container: #D9E3FF;
+
+  --md-secondary:              #C3C0FF;
+  --md-on-secondary:           #2B009E;
+  --md-secondary-container:    #4140C3;
+  --md-on-secondary-container: #E3DFFF;
+
+  --md-tertiary:              #E0A6FF;
+  --md-on-tertiary:           #4C006B;
+  --md-tertiary-container:    #6B0094;
+  --md-on-tertiary-container: #F5D9FF;
+
+  --md-error:              #FF897D;
+  --md-on-error:           #690005;
+  --md-error-container:    #93000A;
+  --md-on-error-container: #FFDAD6;
+
+  --md-success:              #67DBA8;
+  --md-on-success:           #003822;
+  --md-success-container:    #005236;
+  --md-on-success-container: #CCFFF0;
+
+  --md-warning:              #FFB86C;
+  --md-on-warning:           #4A2200;
+  --md-warning-container:    #6A3200;
+  --md-on-warning-container: #FFDDB8;
+
+  --md-background:    #121218;
+  --md-on-background: #E4E1EC;
+
+  --md-surface:            #1A1A23;
+  --md-on-surface:         #E4E1EC;
+  --md-surface-variant:    #46454F;
+  --md-on-surface-variant: #C8C5D1;
+
+  --md-surface-1: #21212C;
+  --md-surface-2: #272734;
+  --md-surface-3: #2C2C3C;
+  --md-surface-4: #2E2E3F;
+  --md-surface-5: #313145;
+
+  --md-outline:         #928F9E;
+  --md-outline-variant: #46454F;
+
+  --md-inverse-surface:    #E4E1EC;
+  --md-inverse-on-surface: #322F3A;
+  --md-inverse-primary:    #2E60F9;
+
+  --md-scrim:         rgba(0, 0, 0, 0.60);
+  --md-shadow-sm:     0 1px 2px rgba(0,0,0,0.30), 0 2px 6px rgba(0,0,0,0.25);
+  --md-shadow-md:     0 2px 4px rgba(0,0,0,0.35), 0 6px 20px rgba(0,0,0,0.30);
+  --md-shadow-lg:     0 4px 8px rgba(0,0,0,0.40), 0 16px 48px rgba(0,0,0,0.45);
+  --md-shadow-dialog: 0 8px 12px rgba(0,0,0,0.50), 0 24px 64px rgba(0,0,0,0.60);
+
+  /* ── Dark-specific semantic overrides ── */
+
+  --c-text-muted:    #A09DB8;
+  --c-text-subtle:   #6E6C85;
+  --c-text-disabled: #46454F;
+
+  --c-nav-bg:             rgba(26, 26, 35, 0.82);
+  --c-nav-border:         rgba(255, 255, 255, 0.06);
+  --c-nav-shadow:         0 2px 20px rgba(0, 0, 0, 0.35);
+  --c-nav-item-active-bg: rgba(175, 198, 255, 0.12);
+  /* frosted glass surfaces (tab bar card, etc.) */
+  --c-frosted-bg:         rgba(26, 26, 35, 0.72);
+  --c-frosted-outer-bg:   rgba(18, 18, 24, 0.60);
+
+  --c-btn-filled-hover-bg: #C5D5FF;
+  --c-btn-filled-shadow:   0 2px 8px rgba(175, 198, 255, 0.18);
+  --c-btn-tonal-bg:        rgba(175, 198, 255, 0.16);
+  --c-btn-tonal-text:      var(--md-primary);
+  --c-btn-disabled-bg:     rgba(255, 255, 255, 0.12);
+  --c-btn-disabled-text:   rgba(255, 255, 255, 0.38);
+
+  --c-input-bg-hover:      #525060;
+  --c-input-disabled-bg:   rgba(255, 255, 255, 0.04);
+  --c-input-disabled-text: rgba(255, 255, 255, 0.38);
+  --c-input-outlined-bg:   var(--md-surface-1);
+
+  --c-dropdown-bg:               var(--md-surface-3);
+  --c-dropdown-item-active-bg:   rgba(175, 198, 255, 0.16);
+  --c-dropdown-item-active-text: var(--md-primary);
+
+  --c-dialog-bg: var(--md-surface-2);
+
+  --c-chip-selected-bg:   rgba(175, 198, 255, 0.16);
+  --c-chip-selected-text: var(--md-primary);
+
+  --c-table-row-hover:       var(--md-surface-1);
+  --c-table-row-selected-bg: rgba(175, 198, 255, 0.12);
+
+  --c-menu-bg:               var(--md-surface-2);
+  --c-menu-item-active-bg:   rgba(175, 198, 255, 0.12);
+  --c-menu-item-active-text: var(--md-primary);
+
+  --c-skeleton-shine: rgba(255, 255, 255, 0.06);
+
+  --c-chart-1:       #7098F8;
+  --c-chart-2:       #67DBA8;
+  --c-chart-3:       #FFB86C;
+  --c-chart-4:       #E0A6FF;
+  --c-chart-5:       #FF897D;
+  --c-chart-6:       #AFC6FF;
+  --c-chart-tooltip: var(--md-surface-3);
+
+  --state-hover:    rgba(175, 198, 255, 0.08);
+  --state-focus:    rgba(175, 198, 255, 0.12);
+  --state-pressed:  rgba(175, 198, 255, 0.16);
+  --state-disabled: rgba(255, 255, 255, 0.12);
+
+}
+
+
+/* ── Global scrollbar ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--c-scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--c-scrollbar-thumb-hover); }

@@ -69,8 +69,9 @@ export default function createForm<T extends Record<string, any>> (config: FormC
 
   /* ── field validation ── */
   async function validateField<K extends keyof T & string> (field: K): Promise<boolean> {
-    const fieldRules = (rules as Record<string, Rule[] | undefined>)[field]
-    if (!fieldRules?.length) {
+    const raw = (rules as Record<string, Rule | Rule[] | undefined>)[field]
+    const fieldRules = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+    if (!fieldRules.length) {
       setMeta(field, 'error', null)
       return true
     }
@@ -80,7 +81,7 @@ export default function createForm<T extends Record<string, any>> (config: FormC
       for (const rule of fieldRules) {
         const result = rule(values[field], values as Record<string, unknown>)
         const resolved = result instanceof Promise ? await result : result
-        if (resolved !== true) {
+        if (typeof resolved === 'string') {
           setMeta(field, 'error', resolved)
           return false
         }

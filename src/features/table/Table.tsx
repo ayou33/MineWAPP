@@ -1,131 +1,9 @@
-﻿import classNames from 'classnames'
-import { createEffect, createMemo, For, Show } from 'solid-js'
+import classNames from 'classnames'
+import { createMemo, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
+import type { JSX } from 'solid-js'
+import { alignClass, computeColWidthsPx, SELECTION_COL_W } from './Table.helpers'
+import { Checkbox, Pagination, PinIcon, SortIcon } from './Table.ui'
 import type { ColumnDef, TableState } from './types'
-
-// Threshold below which all page buttons are shown inline
-const PAGE_INLINE_THRESHOLD = 7
-// Siblings around current page in compact mode
-const PAGE_SIBLING_COUNT = 1
-// Minimum distance from edge before an ellipsis appears
-const PAGE_EDGE_GAP = 2
-
-// --- Indeterminate Checkbox -------------------------------------------------
-
-type CheckboxProps = {
-  checked: boolean
-  indeterminate?: boolean
-  onChange: (e: Event) => void
-  class?: string
-}
-
-function Checkbox (props: CheckboxProps) {
-  let inputEl: HTMLInputElement | null = null
-  createEffect(() => {
-    if (inputEl) inputEl.indeterminate = props.indeterminate ?? false
-  })
-  return (
-    <input
-      ref={el => { inputEl = el }}
-      type="checkbox"
-      checked={props.checked}
-      onChange={props.onChange}
-      class={classNames('w-4 h-4 accent-blue cursor-pointer', props.class)}
-    />
-  )
-}
-
-// --- Sort Icon --------------------------------------------------------------
-
-function SortIcon (props: { dir: 'asc' | 'desc' | null }) {
-  return (
-    <span class="inline-flex flex-col gap-px ml-0.5 shrink-0">
-      <svg
-        class={classNames('w-2 h-2', props.dir === 'asc' ? 'text-blue' : 'text-gray-lighter')}
-        viewBox="0 0 8 5"
-        fill="currentColor"
-      >
-        <path d="M4 0L8 5H0L4 0Z" />
-      </svg>
-      <svg
-        class={classNames('w-2 h-2', props.dir === 'desc' ? 'text-blue' : 'text-gray-lighter')}
-        viewBox="0 0 8 5"
-        fill="currentColor"
-      >
-        <path d="M4 5L0 0H8L4 5Z" />
-      </svg>
-    </span>
-  )
-}
-
-// --- Pagination -------------------------------------------------------------
-
-type PaginationProps = {
-  page: () => number
-  pageSize: () => number
-  total: () => number
-  onPageChange: (page: number) => void
-}
-
-function buildPageNumbers (current: number, total: number): (number | null)[] {
-  if (total <= PAGE_INLINE_THRESHOLD) return Array.from({ length: total }, (_, i) => i + 1)
-
-  const pages: (number | null)[] = [1]
-  if (current > PAGE_EDGE_GAP + 1) pages.push(null)
-  for (let i = Math.max(2, current - PAGE_SIBLING_COUNT); i <= Math.min(total - 1, current + PAGE_SIBLING_COUNT); i++) {
-    pages.push(i)
-  }
-  if (current < total - PAGE_EDGE_GAP) pages.push(null)
-  pages.push(total)
-  return pages
-}
-
-function Pagination (props: PaginationProps) {
-  const totalPages = () => Math.max(1, Math.ceil(props.total() / props.pageSize()))
-  const from = () => (props.page() - 1) * props.pageSize() + 1
-  const to = () => Math.min(props.page() * props.pageSize(), props.total())
-
-  return (
-    <div class="flex items-center justify-between gap-4 px-4 py-3 border-t border-gray-100 text-sm text-gray select-none">
-      <span class="shrink-0">{from()} - {to()} / {props.total()}</span>
-      <div class="flex items-center gap-1">
-        <button
-          class="px-2 py-1 rounded hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          disabled={props.page() <= 1}
-          onClick={() => props.onPageChange(props.page() - 1)}
-          aria-label="Previous page"
-        >
-          &lsaquo;
-        </button>
-        <For each={buildPageNumbers(props.page(), totalPages())}>
-          {item => (
-            <Show when={item !== null} fallback={<span class="px-1">...</span>}>
-              <button
-                class={classNames(
-                  'min-w-8 h-8 px-1 rounded text-sm transition-colors',
-                  item === props.page() ? 'bg-blue text-white' : 'hover:bg-bg text-gray',
-                )}
-                onClick={() => props.onPageChange(item!)}
-                aria-current={item === props.page() ? 'page' : undefined}
-              >
-                {item}
-              </button>
-            </Show>
-          )}
-        </For>
-        <button
-          class="px-2 py-1 rounded hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          disabled={props.page() >= totalPages()}
-          onClick={() => props.onPageChange(props.page() + 1)}
-          aria-label="Next page"
-        >
-          &rsaquo;
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// --- Table ------------------------------------------------------------------
 
 export type TableProps<T extends Record<string, unknown>> = {
   table: TableState<T>
@@ -135,176 +13,231 @@ export type TableProps<T extends Record<string, unknown>> = {
   loading?: () => boolean
   /** Extra class names on the outer wrapper */
   class?: string
-  /** Placeholder shown when there are no rows */
-  emptyText?: string
+  /** Placeholder shown when there are no rows — string or custom JSX */
+  emptyText?: JSX.Element
+  /**
+   * Page size options shown in the per-page selector when pagination is enabled.
+   * Defaults to [10, 20, 50, 100].
+   */
+  pageSizeOptions?: number[]
 }
 
 export default function Table<T extends Record<string, unknown>> (props: TableProps<T>) {
   const t = props.table
+  let containerEl: HTMLDivElement | null = null
+  const [containerW, setContainerW] = createSignal(0)
 
-  const hasFilters = createMemo(() => t.columns.some(c => c.filterable))
-  const colSpan = createMemo(() => t.columns.length + (t.hasSelection ? 1 : 0))
+  onMount(() => {
+    if (!containerEl) return
+    setContainerW(containerEl.getBoundingClientRect().width)
+    const ro = new ResizeObserver(entries => setContainerW(entries[0].contentRect.width))
+    ro.observe(containerEl)
+    onCleanup(() => ro.disconnect())
+  })
+
   const stickyHeader = () => props.stickyHeader !== false
+  const isLoading = () => props.loading?.() ?? false
+  const selW = () => (t.hasSelection ? SELECTION_COL_W : 0)
 
-  function alignClass (align?: 'left' | 'center' | 'right') {
-    if (align === 'center') return 'text-center'
-    if (align === 'right') return 'text-right'
-    return 'text-left'
-  }
+  const visibleColumns = createMemo(() =>
+    t.columns.filter(c => {
+      const h = c.hidden
+      return typeof h === 'function' ? !h() : !h
+    }),
+  )
 
-  function fixedClass (fixed?: 'left' | 'right') {
-    if (fixed === 'left') return 'sticky left-0'
-    if (fixed === 'right') return 'sticky right-0'
-    return ''
-  }
+  // Order: static fixed-left → dynamic pins → rest (includes fixed-right)
+  const orderedColumns = createMemo(() => {
+    const cols = visibleColumns()
+    const pins = t.pinnedKeys()
+    return [
+      ...cols.filter(c => c.fixed === 'left'),
+      ...cols.filter(c => !c.fixed && pins.includes(c.key)),
+      ...cols.filter(c => c.fixed !== 'left' && !pins.includes(c.key)),
+    ]
+  })
 
-  function cellStyle (col: ColumnDef<T>): Record<string, string> {
-    const s: Record<string, string> = {}
-    if (col.width !== undefined && col.width !== null) {
-      s.width = typeof col.width === 'number' ? `${col.width}px` : String(col.width)
+  const colWidthsPx = createMemo(() =>
+    computeColWidthsPx(orderedColumns(), containerW(), selW()),
+  )
+
+  // When columns overflow the container, tableWidthPx > containerW → triggers scroll
+  const tableWidthPx = createMemo(() =>
+    Math.max(containerW(), selW() + colWidthsPx().reduce((s, w) => s + w, 0)),
+  )
+
+  // Cumulative left offsets for all pinned columns (fixed-left + dynamic pins)
+  const pinnedLeftOffsets = createMemo<Record<string, number>>(() => {
+    const offsets: Record<string, number> = {}
+    const cols = orderedColumns()
+    const widths = colWidthsPx()
+    const pins = t.pinnedKeys()
+    let acc = selW()
+    for (let i = 0; i < cols.length; i++) {
+      const col = cols[i]
+      if (col.fixed !== 'left' && !pins.includes(col.key)) break
+      offsets[col.key] = acc
+      acc += widths[i]
+    }
+    return offsets
+  })
+
+  // Key of the rightmost pinned column — receives the separator shadow
+  const lastPinnedKey = createMemo(() => {
+    const pins = t.pinnedKeys()
+    let last: string | null = null
+    for (const col of orderedColumns()) {
+      if (col.fixed === 'left' || pins.includes(col.key)) last = col.key
+      else break
+    }
+    return last
+  })
+
+  const hasFilters = createMemo(() => orderedColumns().some(c => c.filterable))
+  const colSpan = createMemo(() => orderedColumns().length + (t.hasSelection ? 1 : 0))
+
+  function colStyle (col: ColumnDef<T>, idx: number): JSX.CSSProperties {
+    const offsets = pinnedLeftOffsets()
+    const pins = t.pinnedKeys()
+    const isPinned = col.fixed === 'left' || pins.includes(col.key)
+    const w = colWidthsPx()[idx]
+    const s: JSX.CSSProperties = { width: `${w}px`, 'min-width': `${w}px` }
+    if (isPinned) {
+      s.position = 'sticky'
+      s.left = `${offsets[col.key]}px`
+      if (col.key === lastPinnedKey()) s['box-shadow'] = '2px 0 5px -2px rgba(0,0,0,0.15)'
+    } else if (col.fixed === 'right') {
+      s.position = 'sticky'
+      s.right = '0'
     }
     return s
   }
 
+  function colZClass (col: ColumnDef<T>, isHeader: boolean) {
+    const pins = t.pinnedKeys()
+    const isPinned = col.fixed === 'left' || pins.includes(col.key)
+    if (isPinned && isHeader) return 'z-overlay'
+    if (isPinned || col.fixed === 'right') return 'z-focus'
+    return ''
+  }
+
+  const selStyle = (): JSX.CSSProperties => ({
+    position: 'sticky', left: '0',
+    width: `${SELECTION_COL_W}px`, 'min-width': `${SELECTION_COL_W}px`,
+    ...(!lastPinnedKey() ? { 'box-shadow': '2px 0 5px -2px rgba(0,0,0,0.15)' } : {}),
+  })
+
   return (
-    <div class={classNames('relative overflow-auto rounded-lg border border-gray-100', props.class)}>
+    <div ref={el => { containerEl = el }} class={classNames('relative flex flex-col max-h-full overflow-hidden rounded-lg border border-c-outline bg-c-surface', props.class)}>
+      <div class="overflow-auto flex-1 min-h-0">
+        <div style={{ width: containerW() > 0 ? `${tableWidthPx()}px` : '100%' }}>
+          <table class="w-full border-collapse text-sm text-c-text" style={{ 'table-layout': 'fixed' }}>
 
-      {/* Loading overlay */}
-      <Show when={props.loading?.()}>
-        <div class="absolute inset-0 bg-white/70 flex items-center justify-center z-system">
-          <div class="w-7 h-7 border-2 border-blue border-t-transparent rounded-full animate-spin" />
-        </div>
-      </Show>
-
-      <table class="w-full border-collapse text-sm text-black">
-
-        {/* Header */}
-        <thead>
-          <tr class={classNames('bg-bg text-gray', stickyHeader() && 'sticky top-0 z-popup')}>
-            <Show when={t.hasSelection}>
-              <th class="px-3 py-3 w-10 bg-bg">
-                <Checkbox
-                  checked={t.isAllSelected()}
-                  indeterminate={t.isIndeterminate()}
-                  onChange={t.toggleSelectAll}
-                />
-              </th>
-            </Show>
-            <For each={t.columns}>
-              {col => (
-                <th
-                  class={classNames(
-                    'px-4 py-3 font-medium whitespace-nowrap bg-bg',
-                    alignClass(col.align),
-                    fixedClass(col.fixed),
-                    col.fixed && 'z-focus',
-                    col.sortable && 'cursor-pointer select-none hover:text-black',
-                  )}
-                  style={cellStyle(col)}
-                  onClick={() => col.sortable && t.setSort(col.key)}
-                >
-                  <span class="inline-flex items-center gap-0.5">
-                    {col.title}
-                    <Show when={col.sortable}>
-                      <SortIcon dir={t.sort()?.key === col.key ? t.sort()!.dir : null} />
-                    </Show>
-                  </span>
-                </th>
-              )}
-            </For>
-          </tr>
-
-          {/* Filter row */}
-          <Show when={hasFilters()}>
-            <tr class="bg-bg border-t border-gray-100">
+          <thead class={classNames(isLoading() && 'pointer-events-none')}>
+            <tr class={classNames('bg-c-table-header-bg text-c-table-header-text', stickyHeader() && 'sticky top-0 z-sticky')}>
               <Show when={t.hasSelection}>
-                <td class="px-3 py-2 bg-bg" />
+                <th class="px-3 py-3 bg-c-table-header-bg z-overlay" style={selStyle()}>
+                  <Checkbox checked={t.isAllSelected()} indeterminate={t.isIndeterminate()} onChange={t.toggleSelectAll} />
+                </th>
               </Show>
-              <For each={t.columns}>
-                {col => (
-                  <td
-                    class={classNames('px-4 py-2 bg-bg', fixedClass(col.fixed), col.fixed && 'z-focus')}
-                    style={cellStyle(col)}
+              <For each={orderedColumns()}>
+                {(col, i) => (
+                  <th
+                    class={classNames(
+                      'px-5 py-3 font-semibold text-xs whitespace-nowrap bg-c-table-header-bg text-c-text-muted group',
+                      alignClass(col.align), colZClass(col, true),
+                      col.sortable && 'cursor-pointer select-none hover:text-c-text',
+                    )}
+                    style={colStyle(col, i())}
+                    onClick={() => col.sortable && t.setSort(col.key)}
                   >
-                    <Show when={col.filterable}>
-                      <input
-                        type="text"
-                        value={t.filters()[col.key] ?? ''}
-                        onInput={e => t.setFilter(col.key, (e.currentTarget as HTMLInputElement).value)}
-                        placeholder="Filter..."
-                        class="w-full px-2 py-1 text-xs rounded border border-gray-100 bg-white focus:outline-none focus:border-blue placeholder:text-gray-lighter"
-                      />
-                    </Show>
-                  </td>
+                    <span class="inline-flex items-center gap-1">
+                      {col.title}
+                      <Show when={col.sortable}>
+                        <SortIcon dir={t.sort()?.key === col.key ? t.sort()!.dir : null} />
+                      </Show>
+                      <Show when={!col.fixed}>
+                        <button
+                          class={classNames('transition-opacity text-c-text-subtle hover:text-md-primary',
+                            t.pinnedKeys().includes(col.key) ? 'opacity-100 text-md-primary' : 'opacity-0 group-hover:opacity-100')}
+                          onClick={e => { e.stopPropagation(); if (t.pinnedKeys().includes(col.key)) { t.unpinColumn(col.key) } else { t.pinColumn(col.key) } }}
+                          title={t.pinnedKeys().includes(col.key) ? '取消固定' : '固定此列'}
+                        ><PinIcon active={t.pinnedKeys().includes(col.key)} /></button>
+                      </Show>
+                    </span>
+                  </th>
                 )}
               </For>
             </tr>
-          </Show>
-        </thead>
+            <Show when={hasFilters()}>
+              <tr class="bg-c-table-header-bg border-t border-c-table-border">
+                <Show when={t.hasSelection}>
+                  <td class="px-3 py-2 bg-c-table-header-bg z-overlay" style={selStyle()} />
+                </Show>
+                <For each={orderedColumns()}>
+                  {(col, i) => (
+                    <td class={classNames('px-5 py-2 bg-c-table-header-bg', colZClass(col, false))} style={colStyle(col, i())}>
+                      <Show when={col.filterable}>
+                        <input type="text" value={t.filters()[col.key] ?? ''} onInput={e => t.setFilter(col.key, (e.currentTarget as HTMLInputElement).value)} placeholder="Filter..." class="w-full px-2 py-1 text-xs rounded bg-c-surface text-c-text placeholder:text-c-text-subtle outline-none transition-colors" style={{ border: '1px solid var(--c-outline)' }} />
+                      </Show>
+                    </td>
+                  )}
+                </For>
+              </tr>
+            </Show>
+          </thead>
 
-        {/* Body */}
-        <tbody>
-          <Show
-            when={t.displayData().length > 0}
-            fallback={
+          <tbody>
+            <Show when={isLoading()}>
               <tr>
-                <td colspan={colSpan()} class="px-4 py-10 text-center text-gray-light">
-                  {props.emptyText ?? 'No data'}
+                <td colspan={colSpan()} class="px-5 py-14 text-center">
+                  <div class="flex justify-center">
+                    <div class="w-7 h-7 border-2 rounded-full animate-spin" style={{ 'border-color': 'var(--md-primary)', 'border-top-color': 'transparent' }} />
+                  </div>
                 </td>
               </tr>
-            }
-          >
-            <For each={t.displayData()}>
-              {(row, index) => {
-                const key = t.rowKey(row)
-                const isSelected = () => t.selectedKeys().includes(key)
-
-                return (
-                  <tr
-                    class={classNames(
-                      'border-t border-gray-100 transition-colors',
-                      isSelected() ? 'bg-blue-3lighter' : 'hover:bg-bg',
-                    )}
-                  >
-                    <Show when={t.hasSelection}>
-                      <td class={classNames('px-3 py-3 w-10', isSelected() ? 'bg-blue-3lighter' : 'bg-white')}>
-                        <Checkbox checked={isSelected()} onChange={() => t.toggleSelect(key)} />
-                      </td>
-                    </Show>
-                    <For each={t.columns}>
-                      {col => (
-                        <td
-                          class={classNames(
-                            'px-4 py-3',
-                            alignClass(col.align),
-                            fixedClass(col.fixed),
-                            col.fixed && 'z-focus',
-                            col.fixed && (isSelected() ? 'bg-blue-3lighter' : 'bg-white'),
+            </Show>
+            <Show when={!isLoading()}>
+              <Show when={t.displayData().length > 0} fallback={
+                <tr><td colspan={colSpan()} class="px-5 py-10 text-center text-c-text-subtle">{props.emptyText ?? '暂无数据'}</td></tr>
+              }>
+                <For each={t.displayData()}>
+                  {(row, index) => {
+                    const key = t.rowKey(row)
+                    const isSelected = () => t.selectedKeys().includes(key)
+                    return (
+                      <tr class={classNames('border-t border-c-table-border transition-colors', isSelected() ? 'bg-c-table-row-selected-bg' : 'hover:bg-c-table-row-hover')}>
+                        <Show when={t.hasSelection}>
+                          <td class={classNames('px-3 py-3.5 z-focus', isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface')} style={selStyle()}>
+                            <Checkbox checked={isSelected()} onChange={() => t.toggleSelect(key)} />
+                          </td>
+                        </Show>
+                        <For each={orderedColumns()}>
+                          {(col, i) => (
+                            <td
+                              class={classNames('px-5 py-3.5', alignClass(col.align), colZClass(col, false),
+                                (col.fixed === 'left' || t.pinnedKeys().includes(col.key)) && (isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface'))}
+                              style={colStyle(col, i())}
+                            >
+                              {col.render ? col.render(row[col.key as keyof T & string], row, index()) : String(row[col.key] ?? '')}
+                            </td>
                           )}
-                          style={cellStyle(col)}
-                        >
-                          {col.render
-                            ? col.render(row[col.key as keyof T & string], row, index())
-                            : String(row[col.key] ?? '')}
-                        </td>
-                      )}
-                    </For>
-                  </tr>
-                )
-              }}
-            </For>
-          </Show>
-        </tbody>
-      </table>
+                        </For>
+                      </tr>
+                    )
+                  }}
+                </For>
+              </Show>
+            </Show>
+          </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* Pagination */}
       <Show when={t.hasPagination && t.total() > 0}>
-        <Pagination
-          page={t.page}
-          pageSize={t.pageSize}
-          total={t.total}
-          onPageChange={t.setPage}
-        />
+        <div class={classNames('shrink-0', isLoading() && 'pointer-events-none')}>
+          <Pagination page={t.page} pageSize={t.pageSize} total={t.total} onPageChange={t.setPage} onPageSizeChange={t.setPageSize} pageSizeOptions={props.pageSizeOptions ?? [10, 20, 50, 100]} />
+        </div>
       </Show>
     </div>
   )
