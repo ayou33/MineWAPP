@@ -50,14 +50,15 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
     }),
   )
 
-  // Order: static fixed-left → dynamic pins → rest (includes fixed-right)
+  // Order: static fixed-left → dynamic pins → scrollable → fixed-right / action
   const orderedColumns = createMemo(() => {
     const cols = visibleColumns()
     const pins = t.pinnedKeys()
     return [
       ...cols.filter(c => c.fixed === 'left'),
-      ...cols.filter(c => !c.fixed && pins.includes(c.key)),
-      ...cols.filter(c => c.fixed !== 'left' && !pins.includes(c.key)),
+      ...cols.filter(c => !c.fixed && !c.isAction && pins.includes(c.key)),
+      ...cols.filter(c => !c.fixed && !c.isAction && !pins.includes(c.key)),
+      ...cols.filter(c => c.fixed === 'right' || c.isAction),
     ]
   })
 
@@ -97,6 +98,29 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
     return last
   })
 
+  // Key of the leftmost right-fixed column — receives the left separator shadow
+  const firstRightKey = createMemo(() => {
+    for (const col of orderedColumns()) {
+      if (col.fixed === 'right' || col.isAction) return col.key
+    }
+    return null
+  })
+
+  // Cumulative right offsets for all right-fixed columns (rightmost = 0)
+  const pinnedRightOffsets = createMemo<Record<string, number>>(() => {
+    const offsets: Record<string, number> = {}
+    const cols = orderedColumns()
+    const widths = colWidthsPx()
+    let acc = 0
+    for (let i = cols.length - 1; i >= 0; i--) {
+      const col = cols[i]
+      if (col.fixed !== 'right' && !col.isAction) break
+      offsets[col.key] = acc
+      acc += widths[i]
+    }
+    return offsets
+  })
+
   const colSpan = createMemo(() => orderedColumns().length + (t.hasSelection ? 1 : 0))
 
   // Title string of the current group-by column (for group header rows)
@@ -117,18 +141,20 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
       s.position = 'sticky'
       s.left = `${offsets[col.key]}px`
       if (col.key === lastPinnedKey()) s['box-shadow'] = '2px 0 5px -2px rgba(0,0,0,0.15)'
-    } else if (col.fixed === 'right') {
+    } else if (col.fixed === 'right' || col.isAction) {
       s.position = 'sticky'
-      s.right = '0'
+      s.right = `${pinnedRightOffsets()[col.key] ?? 0}px`
+      if (col.key === firstRightKey()) s['box-shadow'] = '-2px 0 5px -2px rgba(0,0,0,0.15)'
     }
     return s
   }
 
   function colZClass (col: ColumnDef<T>, isHeader: boolean) {
     const pins = t.pinnedKeys()
-    const isPinned = col.fixed === 'left' || pins.includes(col.key)
-    if (isPinned && isHeader) return 'z-overlay'
-    if (isPinned || col.fixed === 'right') return 'z-focus'
+    const isPinnedLeft = col.fixed === 'left' || pins.includes(col.key)
+    const isPinnedRight = col.fixed === 'right' || col.isAction
+    if ((isPinnedLeft || isPinnedRight) && isHeader) return 'z-overlay'
+    if (isPinnedLeft || isPinnedRight) return 'z-focus'
     return ''
   }
 
@@ -243,7 +269,7 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
                                 class={classNames(
                                   'px-5 py-3.5 cursor-default transition-colors',
                                   alignClass(col.align), colZClass(col, false),
-                                  (col.fixed === 'left' || t.pinnedKeys().includes(col.key))
+                                  (col.fixed === 'left' || col.fixed === 'right' || col.isAction || t.pinnedKeys().includes(col.key))
                                     && (isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface'),
                                   isCellActive() && 'ring-2 ring-inset ring-md-primary',
                                 )}

@@ -3,7 +3,7 @@ import { createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import type { JSX, JSXElement } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import {
-  ChevronDownIcon, DotsVerticalIcon, FilterActiveIcon,
+  DotsVerticalIcon, FilterActiveIcon,
   GroupIcon, PinIcon, ResetIcon,
 } from './Table.ui'
 import type { ColumnDef, TableState } from './types'
@@ -139,7 +139,7 @@ export function DataColHeaderMenu<T extends Record<string, unknown>> (props: Dat
         onClick={handleClick}
         title="列选项"
       >
-        <ChevronDownIcon />
+        <DotsVerticalIcon />
       </button>
       <Show when={open() && triggerRect()}>
         <DataColMenuDropdown
