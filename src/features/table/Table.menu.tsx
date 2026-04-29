@@ -3,7 +3,7 @@ import { createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import type { JSX, JSXElement } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import {
-  DotsVerticalIcon, FilterActiveIcon,
+  ChevronDownIcon, DotsVerticalIcon, FilterActiveIcon,
   GroupIcon, PinIcon, ResetIcon,
 } from './Table.ui'
 import type { ColumnDef, TableState } from './types'
@@ -165,6 +165,7 @@ type DataColDropdownProps<T extends Record<string, unknown>> = {
 function DataColMenuDropdown<T extends Record<string, unknown>> (props: DataColDropdownProps<T>) {
   const t = props.table
   const key = props.col.key
+  const [valuesExpanded, setValuesExpanded] = createSignal(false)
 
   const currentDir = () => t.sort()?.key === key ? t.sort()!.dir : null
   const isFilterActive = () => !!(t.filters()[key]?.trim()) || (t.filterSelections()[key]?.length ?? 0) > 0
@@ -210,30 +211,42 @@ function DataColMenuDropdown<T extends Record<string, unknown>> (props: DataColD
           style={{ border: '1px solid var(--c-outline)', background: 'var(--c-surface)', color: 'var(--c-text)' }}
           onClick={e => e.stopPropagation()}
         />
-        <div class="mt-1.5 max-h-32 overflow-y-auto space-y-px">
-          <For each={colValues()}>
-            {val => {
-              const isSelected = () => (t.filterSelections()[key] ?? []).includes(val)
-              return (
-                <label class="flex items-center gap-2 py-1 px-1 rounded cursor-pointer hover:bg-c-table-row-hover select-none">
-                  <input
-                    type="checkbox"
-                    checked={isSelected()}
-                    class="w-3.5 h-3.5 accent-md-primary shrink-0"
-                    onChange={() => {
-                      const cur = t.filterSelections()[key] ?? []
-                      t.setFilterSelections(key, isSelected() ? cur.filter(v => v !== val) : [...cur, val])
-                    }}
-                  />
-                  <span class="text-xs truncate" style={{ color: 'var(--c-text)' }}>{val || '(空)'}</span>
-                </label>
-              )
-            }}
-          </For>
-          <Show when={hasMoreValues()}>
-            <div class="px-1 py-1 text-xs" style={{ color: 'var(--c-text-subtle)' }}>仅显示前 60 个唯一值</div>
-          </Show>
-        </div>
+        <button
+          class="mt-1.5 w-full flex items-center justify-between px-1 py-1 rounded text-xs transition-colors hover:bg-c-table-row-hover select-none"
+          style={{ color: 'var(--c-text-muted)' }}
+          onClick={e => { e.stopPropagation(); setValuesExpanded(v => !v) }}
+        >
+          <span>枚举值 ({colValues().length}{hasMoreValues() ? '+' : ''})</span>
+          <span class={classNames('transition-transform', valuesExpanded() && 'rotate-180')}>
+            <ChevronDownIcon />
+          </span>
+        </button>
+        <Show when={valuesExpanded()}>
+          <div class="mt-1 max-h-32 overflow-y-auto space-y-px">
+            <For each={colValues()}>
+              {val => {
+                const isSelected = () => (t.filterSelections()[key] ?? []).includes(val)
+                return (
+                  <label class="flex items-center gap-2 py-1 px-1 rounded cursor-pointer hover:bg-c-table-row-hover select-none">
+                    <input
+                      type="checkbox"
+                      checked={isSelected()}
+                      class="w-3.5 h-3.5 accent-md-primary shrink-0"
+                      onChange={() => {
+                        const cur = t.filterSelections()[key] ?? []
+                        t.setFilterSelections(key, isSelected() ? cur.filter(v => v !== val) : [...cur, val])
+                      }}
+                    />
+                    <span class="text-xs truncate" style={{ color: 'var(--c-text)' }}>{val || '(空)'}</span>
+                  </label>
+                )
+              }}
+            </For>
+            <Show when={hasMoreValues()}>
+              <div class="px-1 py-1 text-xs" style={{ color: 'var(--c-text-subtle)' }}>仅显示前 60 个唯一值</div>
+            </Show>
+          </div>
+        </Show>
         <Show when={isFilterActive()}>
           <button
             class="mt-1.5 w-full text-xs py-1 rounded transition-colors hover:bg-c-table-row-hover"
