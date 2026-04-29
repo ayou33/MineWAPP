@@ -27,14 +27,16 @@ export type TableProps<T extends Record<string, unknown>> = {
 
 export default function Table<T extends Record<string, unknown>> (props: TableProps<T>) {
   const t = props.table
-  let containerEl: HTMLDivElement | null = null
+  // Observe the inner scroll container — contentRect.width excludes the vertical
+  // scrollbar, preventing it from triggering a spurious horizontal scrollbar.
+  let scrollEl: HTMLDivElement | null = null
   const [containerW, setContainerW] = createSignal(0)
 
   onMount(() => {
-    if (!containerEl) return
-    setContainerW(containerEl.getBoundingClientRect().width)
+    if (!scrollEl) return
+    setContainerW(scrollEl.getBoundingClientRect().width)
     const ro = new ResizeObserver(entries => setContainerW(entries[0].contentRect.width))
-    ro.observe(containerEl)
+    ro.observe(scrollEl)
     onCleanup(() => ro.disconnect())
   })
 
@@ -165,8 +167,8 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
   })
 
   return (
-    <div ref={el => { containerEl = el }} class={classNames('relative flex flex-col max-h-full overflow-hidden rounded-lg border border-c-outline bg-c-surface', props.class)}>
-      <div class="overflow-auto flex-1 min-h-0">
+    <div class={classNames('relative flex flex-col max-h-full overflow-hidden rounded-lg border border-c-outline bg-c-surface', props.class)}>
+      <div ref={el => { scrollEl = el }} class="overflow-auto flex-1 min-h-0">
         <div style={{ width: containerW() > 0 ? `${tableWidthPx()}px` : '100%' }}>
           <table class="w-full border-collapse text-sm text-c-text" style={{ 'table-layout': 'fixed' }}>
 
