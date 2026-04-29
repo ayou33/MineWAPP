@@ -1,6 +1,7 @@
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import Icon from '@/components/Icon'
+import Spin from '@/components/Spin'
 
 export type SelectOption = {
   label: string
@@ -8,7 +9,8 @@ export type SelectOption = {
 }
 
 type SelectProps = {
-  options: SelectOption[]
+  /** Static array or an async function for lazy loading. The function result is cached after the first successful load. */
+  options: SelectOption[] | (() => Promise<SelectOption[]>)
   /** Current value. Pass '' to indicate no selection. */
   value: string
   onChange: (v: string) => void
@@ -49,20 +51,40 @@ export default function Select (props: SelectProps) {
   const [visible, setVisible] = createSignal(false)
   const [search, setSearch] = createSignal('')
   const [panelPos, setPanelPos] = createSignal<PanelPos | null>(null)
+  const [asyncOptions, setAsyncOptions] = createSignal<SelectOption[]>([])
+  const [loadingOptions, setLoadingOptions] = createSignal(false)
+  const [asyncLoaded, setAsyncLoaded] = createSignal(false)
 
   let triggerRef: HTMLButtonElement | undefined
   let panelRef: HTMLDivElement | undefined
   let searchRef: HTMLInputElement | undefined
   let closeTimer: ReturnType<typeof setTimeout> | undefined
 
+  const allOptions = createMemo(() =>
+    typeof props.options === 'function' ? asyncOptions() : (props.options as SelectOption[])
+  )
+
   const filtered = createMemo(() => {
     const q = search().toLowerCase()
-    return q ? props.options.filter(o => o.label.toLowerCase().includes(q)) : props.options
+    const opts = allOptions()
+    return q ? opts.filter(o => o.label.toLowerCase().includes(q)) : opts
   })
 
   const selectedLabel = createMemo(() =>
-    props.options.find(o => o.value === props.value)?.label ?? null,
+    allOptions().find(o => o.value === props.value)?.label ?? null,
   )
+
+  async function loadOptions () {
+    if (typeof props.options !== 'function' || asyncLoaded()) return
+    setLoadingOptions(true)
+    try {
+      const result = await props.options()
+      setAsyncOptions(result)
+      setAsyncLoaded(true)
+    } finally {
+      setLoadingOptions(false)
+    }
+  }
 
   function openDropdown () {
     if (props.disabled) return
@@ -83,6 +105,7 @@ export default function Select (props: SelectProps) {
 
     setPanelPos(pos)
     setMounted(true)
+    void loadOptions()
     requestAnimationFrame(() => requestAnimationFrame(() => {
       setVisible(true)
       searchRef?.focus()
@@ -233,6 +256,14 @@ export default function Select (props: SelectProps) {
               onWheel={e => e.stopPropagation()}
             >
               <Show
+                when={!loadingOptions()}
+                fallback={
+                  <div class="flex items-center justify-center py-6">
+                    <Spin class="border-md-primary" />
+                  </div>
+                }
+              >
+              <Show
                 when={filtered().length > 0}
                 fallback={<p class="text-center text-xs text-c-text-subtle py-4">无匹配选项</p>}
               >
@@ -257,6 +288,7 @@ export default function Select (props: SelectProps) {
                     )
                   }}
                 </For>
+              </Show>
               </Show>
             </div>
 
