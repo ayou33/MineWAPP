@@ -1,5 +1,7 @@
 export { default as ButtonGroup } from './ButtonGroup'
 export type { ButtonGroupOption, ButtonGroupProps } from './ButtonGroup'
+export { default as SearchBox } from './SearchBox'
+export type { SearchBoxProps } from './SearchBox'
 export { default as FormItem } from './FormItem'
 export { default as Input } from './Input'
 export { default as PasswordInput } from './PasswordInput'

@@ -1,6 +1,7 @@
 import { createTable, Table } from '@/features/table'
 import { createForm, required, minLength, maxLength, min, max, email } from '@/features/form'
 import Button from '@/components/Button'
+import SearchBox from '@/components/form/SearchBox'
 import usePageContext from '@/hooks/usePageContext'
 import { TipType } from '@/config'
 import { createEffect, createSignal, For, JSXElement, ParentProps, Show } from 'solid-js'
@@ -54,6 +55,152 @@ function simulateFetch (page: number, pageSize: number): Promise<{ rows: User[];
       const start = (page - 1) * pageSize
       resolve({ rows: SEED_DATA.slice(start, start + pageSize), total: SEED_DATA.length })
     }, 700),
+  )
+}
+
+// --- SearchBox demo ---------------------------------------------------------
+
+// Async search: simulates a network request filtering SEED_DATA by query
+function searchUsers (query: string): Promise<User[]> {
+  return new Promise(resolve =>
+    setTimeout(() => {
+      const q = query.toLowerCase()
+      resolve(SEED_DATA.filter(u =>
+        u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+      ))
+    }, 400),
+  )
+}
+
+function SearchBoxDemo () {
+  const { toast } = usePageContext()
+
+  // Track last selected item for the status display
+  const [selected1, setSelected1] = createSignal<User | null>(null)
+  const [selected2, setSelected2] = createSignal<User | null>(null)
+  const [selected3, setSelected3] = createSignal<User | null>(null)
+
+  // Helper: highlight matching substring
+  function highlight (text: string, query: string) {
+    if (!query) return <>{text}</>
+    const idx = text.toLowerCase().indexOf(query.toLowerCase())
+    if (idx === -1) return <>{text}</>
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark class="bg-yellow/40 text-black rounded px-0.5">{text.slice(idx, idx + query.length)}</mark>
+        {text.slice(idx + query.length)}
+      </>
+    )
+  }
+
+  return (
+    <section class="mb-12">
+      <h2 class="text-lg font-semibold text-black mb-1">SearchBox</h2>
+      <p class="text-sm text-gray mb-6">
+        搜索框组件：支持静态数据 / 异步请求、自定义渲染、指定匹配字段、自定义面板样式。
+      </p>
+
+      <div class="grid gap-8" style={{ 'grid-template-columns': 'repeat(auto-fit, minmax(16rem, 1fr))' }}>
+
+        {/* ── Demo 1: 静态数组，搜索所有字段，卡片式渲染 ── */}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 flex flex-col gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-light">
+            静态数组 · 全字段匹配 · 卡片渲染 · <code class="bg-bg px-1 rounded">displayField="name"</code>
+          </p>
+          <SearchBox
+            data={SEED_DATA}
+            placeholder="搜索姓名 / 邮箱 / 角色…"
+            displayField="name"
+            onSelect={u => { setSelected1(u); toast(`已选择 ${u.name}`, { type: TipType.SUCCESS }) }}
+          >
+            {(user, q) => (
+              <div class="flex items-center gap-3 px-3 py-2.5">
+                <span class="w-8 h-8 rounded-full bg-blue-3lighter text-blue text-xs font-bold flex items-center justify-center shrink-0">
+                  {user.name[0]}
+                </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-black truncate">
+                    {highlight(user.name, q)}
+                  </p>
+                  <p class="text-xs text-gray truncate">{highlight(user.email, q)}</p>
+                </div>
+                <span class={`shrink-0 text-xs px-1.5 py-0.5 rounded font-medium ${ROLE_COLORS[user.role] ?? ''}`}>
+                  {user.role}
+                </span>
+              </div>
+            )}
+          </SearchBox>
+          <Show when={selected1()}>
+            <p class="text-xs text-gray-light">
+              已选：<span class="text-blue font-medium">{selected1()!.name}</span>
+              （{selected1()!.role}）
+            </p>
+          </Show>
+        </div>
+
+        {/* ── Demo 2: 静态数组，仅匹配 name 字段，紧凑行渲染 ── */}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 flex flex-col gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-light">
+            静态数组 · 仅匹配 <code class="bg-bg px-1 rounded">name</code> 字段
+          </p>
+          <SearchBox
+            data={SEED_DATA}
+            fields={['name']}
+            placeholder="按姓名搜索…"
+            panelClass="rounded-lg"
+            onSelect={u => { setSelected2(u); toast(`已选择 ${u.name}`, { type: TipType.SUCCESS }) }}
+          >
+            {(user, q) => (
+              <div class="flex items-center justify-between px-3 py-2 gap-2">
+                <span class="text-sm text-black">{highlight(user.name, q)}</span>
+                <span class="text-xs text-gray shrink-0">年龄 {user.age}</span>
+              </div>
+            )}
+          </SearchBox>
+          <Show when={selected2()}>
+            <p class="text-xs text-gray-light">
+              已选：<span class="text-blue font-medium">{selected2()!.name}</span>，
+              年龄 {selected2()!.age}
+            </p>
+          </Show>
+        </div>
+
+        {/* ── Demo 3: 异步请求，400ms 延迟，loading 状态 ── */}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 flex flex-col gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-light">
+            异步请求 · 400 ms 延迟 · loading 状态
+          </p>
+          <SearchBox
+            data={searchUsers}
+            debounce={200}
+            placeholder="异步搜索用户…"
+            onSelect={u => { setSelected3(u); toast(`已选择 ${u.name}`, { type: TipType.SUCCESS }) }}
+          >
+            {(user, q) => (
+              <div class="flex items-center gap-3 px-3 py-2.5">
+                <span
+                  class={`w-2 h-2 rounded-full shrink-0 ${user.status === 'active' ? 'bg-green' : 'bg-gray-lighter'}`}
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-black truncate">{highlight(user.name, q)}</p>
+                  <p class="text-xs text-gray truncate">{highlight(user.email, q)}</p>
+                </div>
+              </div>
+            )}
+          </SearchBox>
+          <Show when={selected3()}>
+            <p class="text-xs text-gray-light">
+              已选：<span class="text-blue font-medium">{selected3()!.name}</span>
+              <span class={`ml-1 ${selected3()!.status === 'active' ? 'text-green-darker' : 'text-gray'}`}>
+                ({selected3()!.status})
+              </span>
+            </p>
+          </Show>
+        </div>
+
+      </div>
+    </section>
   )
 }
 
@@ -552,6 +699,7 @@ export default function Example () {
         <h1 class="text-2xl font-bold text-black">Components Example</h1>
         <p class="text-sm text-gray mt-1">Table & Form feature 使用示例</p>
       </header>
+      <SearchBoxDemo />
       <TableDemo />
       <ServerPaginationDemo />
       <FormDemo />
