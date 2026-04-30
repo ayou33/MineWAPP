@@ -25,6 +25,10 @@ body {
   font-family: font-app, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+.iconify-icon {
+  display: inline;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 0;

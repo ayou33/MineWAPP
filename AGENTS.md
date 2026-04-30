@@ -37,7 +37,7 @@ Every feature lives in `src/module/<feature>/` with conventions:
 ```
 src/module/foo/
 ├── Foo.index.tsx        # page entry – default export is the page component
-├── Foo.module.scss      # scoped styles (optional)
+├── Foo.module.css       # scoped styles — ONLY for keyframes/pseudo-elements (optional)
 ├── foo.api.ts           # API defs using get/post from @/tools/request ONLY
 ├── foo.helper.ts        # module-specific helpers (optional)
 ├── store/
@@ -169,7 +169,16 @@ TailwindCSS v4 uses `@tailwindcss/vite` plugin which **only processes `.css` fil
 - `src/style/var.scss` — CSS custom properties (`:root`): theme colors, `--transition-duration`, `--ease-back-in-out`.
 - `src/style/transition.scss` — All animation classes (tip animations, popup transitions). Uses CSS variables, **not SCSS variables**, for duration and easing.
 - `src/style/index.scss` — `@import "./var.scss"` + `@import "./transition.scss"`, base reset styles.
-- Module-scoped styles use `*.module.scss`.
+
+### Component Styles — Tailwind First
+**Always use Tailwind utility classes in JSX** for component styling. Do not create `*.module.scss` or `*.module.css` for component-scoped styles unless truly unavoidable.
+
+Permitted exceptions (use `*.module.css`, never `.scss`):
+- Keyframe animations (`@keyframes`)
+- Complex pseudo-element selectors (`::before`/`::after`) when Tailwind pseudo-utilities are insufficient
+- Third-party integration overrides
+
+When a module file is required, keep it minimal — only what Tailwind cannot express.
 
 ### CSS Variables
 All shared timing/easing values live as CSS custom properties in `var.scss`:
@@ -321,7 +330,7 @@ When adapting this template to a new project, these are the **only files** you n
 ## Coding Conventions
 - Alias: `@` → `src/`, `/^lunzi/` → `./lunzi` directory.
 - Functional components only. No class components.
-- `*.module.scss` for component-scoped styles.
+- Prefer Tailwind utility classes in JSX over module CSS. Use `*.module.css` only for keyframes, pseudo-elements, or selectors Tailwind cannot express.
 - Prefer small, focused changes over broad refactors.
 - Always verify build (`pnpm build`) after structural changes.
 

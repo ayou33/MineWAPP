@@ -2,6 +2,7 @@ import { createTable, Table } from '@/features/table'
 import { createForm, required, minLength, maxLength, min, max, email } from '@/features/form'
 import Button from '@/components/Button'
 import SearchBox from '@/components/form/SearchBox'
+import { DateTimePicker, showDateTimePicker } from '@/components/DateTimePicker'
 import usePageContext from '@/hooks/usePageContext'
 import { TipType } from '@/config'
 import { createEffect, createSignal, For, JSXElement, ParentProps, Show } from 'solid-js'
@@ -619,6 +620,159 @@ function FormDemo () {
   )
 }
 
+// --- DateTimePicker demo ----------------------------------------------------
+
+function formatDate (d: Date) {
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+function formatTime (d: Date) {
+  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+function formatDateTime (d: Date) {
+  return `${formatDate(d)} ${formatTime(d)}`
+}
+
+function DateTimePickerDemo () {
+  const [dateValue, setDateValue] = createSignal<Date | null>(null)
+  const [timeValue, setTimeValue] = createSignal<Date | null>(null)
+  const [datetimeValue, setDatetimeValue] = createSignal<Date | null>(null)
+
+  // Inline demo state
+  const [inlineMode, setInlineMode] = createSignal<'date' | 'time' | 'datetime'>('datetime')
+  const [inlineValue, setInlineValue] = createSignal<Date>(new Date())
+
+  return (
+    <section class="mb-12">
+      <h2 class="text-lg font-semibold text-black mb-1">DateTimePicker</h2>
+      <p class="text-sm text-gray mb-6">
+        滚轮选择器：支持日期、时间、日期+时间三种模式。鼠标滚轮 / 触摸拖拽 / 点击均可操作。
+      </p>
+
+      {/* ── Popup 触发 demos ── */}
+      <div class="grid gap-6 mb-8" style={{ 'grid-template-columns': 'repeat(auto-fit, minmax(14rem, 1fr))' }}>
+
+        {/* 选择日期 */}
+        <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-light">
+            日期模式 <code class="bg-bg px-1 rounded">mode="date"</code>
+          </p>
+          <button
+            class="w-full py-2.5 px-4 rounded-lg border border-gray-100 text-sm text-left flex items-center justify-between hover:bg-bg transition-colors"
+            onClick={() => {
+              showDateTimePicker({ mode: 'date', value: dateValue() ?? new Date() })
+                .then(d => d && setDateValue(d))
+            }}
+          >
+            <span class={dateValue() ? 'text-black' : 'text-gray-light'}>
+              {dateValue() ? formatDate(dateValue()!) : '点击选择日期'}
+            </span>
+            <span class="text-gray-light text-xs">📅</span>
+          </button>
+          <Show when={dateValue()}>
+            <p class="text-xs text-gray-light">
+              已选：<span class="text-blue font-medium">{formatDate(dateValue()!)}</span>
+            </p>
+          </Show>
+        </div>
+
+        {/* 选择时间 */}
+        <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-light">
+            时间模式 <code class="bg-bg px-1 rounded">mode="time"</code>
+          </p>
+          <button
+            class="w-full py-2.5 px-4 rounded-lg border border-gray-100 text-sm text-left flex items-center justify-between hover:bg-bg transition-colors"
+            onClick={() => {
+              showDateTimePicker({ mode: 'time', value: timeValue() ?? new Date() })
+                .then(d => d && setTimeValue(d))
+            }}
+          >
+            <span class={timeValue() ? 'text-black' : 'text-gray-light'}>
+              {timeValue() ? formatTime(timeValue()!) : '点击选择时间'}
+            </span>
+            <span class="text-gray-light text-xs">🕐</span>
+          </button>
+          <Show when={timeValue()}>
+            <p class="text-xs text-gray-light">
+              已选：<span class="text-blue font-medium">{formatTime(timeValue()!)}</span>
+            </p>
+          </Show>
+        </div>
+
+        {/* 日期 + 时间 */}
+        <div class="bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-light">
+            日期+时间 <code class="bg-bg px-1 rounded">mode="datetime"</code>
+          </p>
+          <button
+            class="w-full py-2.5 px-4 rounded-lg border border-gray-100 text-sm text-left flex items-center justify-between hover:bg-bg transition-colors"
+            onClick={() => {
+              showDateTimePicker({ mode: 'datetime', value: datetimeValue() ?? new Date() })
+                .then(d => d && setDatetimeValue(d))
+            }}
+          >
+            <span class={datetimeValue() ? 'text-black' : 'text-gray-light'}>
+              {datetimeValue() ? formatDateTime(datetimeValue()!) : '点击选择日期和时间'}
+            </span>
+            <span class="text-gray-light text-xs">📆</span>
+          </button>
+          <Show when={datetimeValue()}>
+            <p class="text-xs text-gray-light">
+              已选：<span class="text-blue font-medium">{formatDateTime(datetimeValue()!)}</span>
+            </p>
+          </Show>
+        </div>
+
+      </div>
+
+      {/* ── 内嵌 Inline demo ── */}
+      <div class="bg-white border border-gray-100 rounded-xl p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-light mb-4">
+          内嵌模式（直接嵌入页面，无需弹窗）
+        </p>
+
+        {/* mode 切换 */}
+        <div class="flex gap-2 mb-4">
+          {(['date', 'time', 'datetime'] as const).map(m => (
+            <button
+              class={[
+                'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
+                inlineMode() === m
+                  ? 'bg-blue-3lighter text-blue border-blue/20'
+                  : 'bg-white text-gray border-gray-100 hover:bg-bg',
+              ].join(' ')}
+              onClick={() => setInlineMode(m)}
+            >
+              {m === 'date' ? '日期' : m === 'time' ? '时间' : '日期+时间'}
+            </button>
+          ))}
+        </div>
+
+        {/* Inline picker */}
+        <div class="max-w-xs mx-auto">
+          <DateTimePicker
+            mode={inlineMode()}
+            value={inlineValue()}
+            onConfirm={d => setInlineValue(d)}
+          />
+        </div>
+
+        {/* Selected value display */}
+        <p class="text-center text-sm text-gray mt-4">
+          当前值：
+          <span class="text-blue font-medium ml-1">
+            {inlineMode() === 'date'
+              ? formatDate(inlineValue())
+              : inlineMode() === 'time'
+                ? formatTime(inlineValue())
+                : formatDateTime(inlineValue())}
+          </span>
+        </p>
+      </div>
+    </section>
+  )
+}
+
 // --- Helpers ----------------------------------------------------------------
 
 type CtrlBtnProps = ParentProps<{
@@ -700,6 +854,7 @@ export default function Example () {
         <p class="text-sm text-gray mt-1">Table & Form feature 使用示例</p>
       </header>
       <SearchBoxDemo />
+      <DateTimePickerDemo />
       <TableDemo />
       <ServerPaginationDemo />
       <FormDemo />

@@ -12,7 +12,7 @@ export default function Icon (props: InheritProps<IconsProps>) {
   return (
     <I
       icon={`${props.set ?? 'line-md'}:${props.name}`}
-      class={classNames(props.class)}
+      class={classNames('iconify-icon', props.class)}
       width={props.size as string}
       height={props.size as string}
       style={{ ...(props.color ? { color: props.color } : {}), ...(props.style || {}) }}
