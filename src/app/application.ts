@@ -15,10 +15,11 @@
  *   3. The new subsystem is immediately accessible as `application.<key>`.
  */
 import { createApplication } from './AppCore'
-import { AccountSubsystem, BridgeSubsystem, ConfigSubsystem, NetworkSubsystem, ReportSubsystem } from '@/app/subsystems'
+import { AccountSubsystem, BridgeSubsystem, ConfigSubsystem, GlobalSubsystem, NetworkSubsystem, ReportSubsystem } from '@/app/subsystems'
 
 export type { AppUser, AuthProvider, IAuthStrategy, Permission } from './subsystems/AccountSubsystem'
 export type { ConfigOptions } from './subsystems/ConfigSubsystem'
+export type { GlobalResponder } from './subsystems/GlobalSubsystem'
 export type { ReportOptions } from './subsystems/ReportSubsystem'
 export type { ApplicationInstance } from './AppCore'
 export type { ISocket, SocketState } from './subsystems/SocketSubsystem'
@@ -43,6 +44,15 @@ const application = createApplication({
 
   /** Network connectivity and page visibility reactive state. */
   network: new NetworkSubsystem(),
+
+  /**
+   * Global responder registry — auto-discovers `*.global.ts` files in modules
+   * and registers their exported `GlobalResponder` entries for cross-module invocation.
+   */
+  global: new GlobalSubsystem(
+    // import.meta.glob must be a static literal — called here, result passed to the subsystem.
+    import.meta.glob('/src/modules/**/*.global.ts', { eager: true }),
+  ),
 
   /** Error capture, analytics events, batched tracking. */
   report: new ReportSubsystem({
