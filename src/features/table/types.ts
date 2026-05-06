@@ -16,7 +16,7 @@ export type ColumnAlign = 'left' | 'center' | 'right'
 
 export type ColumnFixed = 'left' | 'right'
 
-export type ColumnDef<T extends Record<string, unknown>> = {
+export type ColumnDef<T extends object> = {
   /** Unique key, also used to access row data via `row[key]` */
   key: string
   title: string | JSXElement
@@ -45,12 +45,31 @@ export type ColumnDef<T extends Record<string, unknown>> = {
   isAction?: boolean
 }
 
+/**
+ * Configuration for expandable rows.
+ * Expand state and sub-data loading live in the parent; Table only renders
+ * the toggle column and the full-width content panel.
+ */
+export type ExpandConfig<T extends object> = {
+  /** Called when the expand chevron is clicked */
+  onToggle: (row: T) => void
+  /** Whether the row is currently expanded */
+  isExpanded: (row: T) => boolean
+  /** Full-width slot rendered below the expanded row */
+  renderContent: (row: T) => JSXElement
+  /**
+   * Predicate to decide which rows are expandable.
+   * Defaults to `() => true` — all rows expandable.
+   */
+  isExpandable?: (row: T) => boolean
+}
+
 /** A row in the grouped display — either a group-label row or a data row */
 export type GroupedRow<T> =
   | { type: 'group'; value: string }
   | { type: 'row'; row: T; index: number }
 
-export type TableConfig<T extends Record<string, unknown>> = {
+export type TableConfig<T extends object> = {
   columns: ColumnDef<T>[]
   data: Accessor<T[]>
   /** Derive a unique string key from a row (defaults to `row.id`) */
@@ -75,7 +94,7 @@ export type TableConfig<T extends Record<string, unknown>> = {
   defaultPageSize?: number
 }
 
-export type TableState<T extends Record<string, unknown>> = {
+export type TableState<T extends object> = {
   /* ── Static config ── */
   columns: ColumnDef<T>[]
   rowKey: (row: T) => string
@@ -149,4 +168,3 @@ export type TableState<T extends Record<string, unknown>> = {
   /** Return sorted unique string values for a column from the raw data */
   getColumnValues: (key: string) => string[]
 }
-

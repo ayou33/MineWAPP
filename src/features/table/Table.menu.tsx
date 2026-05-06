@@ -100,12 +100,12 @@ function MenuBtn (props: MenuBtnProps) {
 
 // ── DataColHeaderMenu ─────────────────────────────────────────────────────────
 
-type DataColMenuProps<T extends Record<string, unknown>> = {
+type DataColMenuProps<T extends object> = {
   col: ColumnDef<T>
   table: TableState<T>
 }
 
-export function DataColHeaderMenu<T extends Record<string, unknown>> (props: DataColMenuProps<T>) {
+export function DataColHeaderMenu<T extends object> (props: DataColMenuProps<T>) {
   const t = props.table
   const key = () => props.col.key
   let btnEl: HTMLButtonElement | null = null
@@ -155,14 +155,14 @@ export function DataColHeaderMenu<T extends Record<string, unknown>> (props: Dat
 
 // ── DataColMenuDropdown ───────────────────────────────────────────────────────
 
-type DataColDropdownProps<T extends Record<string, unknown>> = {
+type DataColDropdownProps<T extends object> = {
   col: ColumnDef<T>
   table: TableState<T>
   triggerRect: DOMRect
   onClose: () => void
 }
 
-function DataColMenuDropdown<T extends Record<string, unknown>> (props: DataColDropdownProps<T>) {
+function DataColMenuDropdown<T extends object> (props: DataColDropdownProps<T>) {
   const t = props.table
   const key = props.col.key
   const [valuesExpanded, setValuesExpanded] = createSignal(false)
@@ -281,11 +281,11 @@ function DataColMenuDropdown<T extends Record<string, unknown>> (props: DataColD
 
 // ── ActionColHeaderMenu ───────────────────────────────────────────────────────
 
-type ActionMenuProps<T extends Record<string, unknown>> = {
+type ActionMenuProps<T extends object> = {
   table: TableState<T>
 }
 
-export function ActionColHeaderMenu<T extends Record<string, unknown>> (props: ActionMenuProps<T>) {
+export function ActionColHeaderMenu<T extends object> (props: ActionMenuProps<T>) {
   const t = props.table
   let btnEl: HTMLButtonElement | null = null
   const [open, setOpen] = createSignal(false)
@@ -334,13 +334,13 @@ export function ActionColHeaderMenu<T extends Record<string, unknown>> (props: A
 
 // ── ActionColMenuDropdown ─────────────────────────────────────────────────────
 
-type ActionDropdownProps<T extends Record<string, unknown>> = {
+type ActionDropdownProps<T extends object> = {
   table: TableState<T>
   triggerRect: DOMRect
   onClose: () => void
 }
 
-function ActionColMenuDropdown<T extends Record<string, unknown>> (props: ActionDropdownProps<T>) {
+function ActionColMenuDropdown<T extends object> (props: ActionDropdownProps<T>) {
   const t = props.table
 
   // All non-action, non-statically-hidden columns are toggleable

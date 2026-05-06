@@ -1,7 +1,7 @@
 import { batch, createMemo, createSignal } from 'solid-js'
 import type { FilterSelections, FilterState, GroupedRow, SortDir, SortState, TableConfig, TableState } from './types'
 
-export function createTable<T extends Record<string, unknown>> (config: TableConfig<T>): TableState<T> {
+export function createTable<T extends object> (config: TableConfig<T>): TableState<T> {
   const {
     columns,
     data,
@@ -36,22 +36,22 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     for (const [key, val] of Object.entries(active)) {
       if (!val.trim()) continue
       const lower = val.toLowerCase()
-      rows = rows.filter(row => String(row[key] ?? '').toLowerCase().includes(lower))
+      rows = rows.filter(row => String((row as Record<string, unknown>)[key] ?? '').toLowerCase().includes(lower))
     }
 
     // Multi-select filters (AND between columns)
     const selections = filterSelections()
     for (const [key, vals] of Object.entries(selections)) {
       if (!vals.length) continue
-      rows = rows.filter(row => vals.includes(String(row[key] ?? '')))
+      rows = rows.filter(row => vals.includes(String((row as Record<string, unknown>)[key] ?? '')))
     }
 
     // Sort
     const s = sort()
     if (s) {
       rows.sort((a, b) => {
-        const av = a[s.key] as string | number | null | undefined
-        const bv = b[s.key] as string | number | null | undefined
+        const av = (a as Record<string, unknown>)[s.key] as string | number | null | undefined
+        const bv = (b as Record<string, unknown>)[s.key] as string | number | null | undefined
         if (av === bv) return 0
         if (av === null || av === undefined) return 1
         if (bv === null || bv === undefined) return -1
@@ -67,6 +67,7 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
 
   /* ── Derived: paginated view ── */
   const displayData = createMemo(() => {
+    // Server-side mode: data is already the current page — never slice
     if (serverPagination) return processedData()
     if (!clientPagination) return processedData()
     const start = (page() - 1) * pageSize()
@@ -82,7 +83,7 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     const groupOrder: string[] = []
     const groupMap = new Map<string, T[]>()
     for (const row of rows) {
-      const val = String(row[gk] ?? '')
+      const val = String((row as Record<string, unknown>)[gk] ?? '')
       if (!groupMap.has(val)) { groupOrder.push(val); groupMap.set(val, []) }
       groupMap.get(val)!.push(row)
     }
@@ -187,7 +188,7 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
 
   function getColumnValues (key: string): string[] {
     const seen = new Set<string>()
-    for (const row of data()) seen.add(String(row[key] ?? ''))
+    for (const row of data()) seen.add(String((row as Record<string, unknown>)[key] ?? ''))
     return [...seen].sort()
   }
 
@@ -232,4 +233,3 @@ export function createTable<T extends Record<string, unknown>> (config: TableCon
     getColumnValues,
   }
 }
-

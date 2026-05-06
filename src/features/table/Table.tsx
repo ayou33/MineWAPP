@@ -1,14 +1,14 @@
 import classNames from 'classnames'
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import type { JSX } from 'solid-js'
-import { alignClass, computeColWidthsPx, SELECTION_COL_W } from './Table.helpers'
+import { alignClass, computeColWidthsPx, EXPAND_COL_W, SELECTION_COL_W } from './Table.helpers'
 import { ActionColHeaderMenu, DataColHeaderMenu } from './Table.menu'
 import { Checkbox, FilterActiveIcon, Pagination, SortIcon } from './Table.ui'
-import type { ColumnDef, GroupedRow, TableState } from './types'
+import type { ColumnDef, ExpandConfig, GroupedRow, TableState } from './types'
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
-export type TableProps<T extends Record<string, unknown>> = {
+export type TableProps<T extends object> = {
   table: TableState<T>
   /** Stick the header to the top of the scroll container (default: true) */
   stickyHeader?: boolean
@@ -23,9 +23,15 @@ export type TableProps<T extends Record<string, unknown>> = {
    * Defaults to [10, 20, 50, 100].
    */
   pageSizeOptions?: number[]
+  /**
+   * When provided, each row gets an expand toggle column on the far left.
+   * Expand state and sub-data loading are owned by the parent — Table only
+   * renders the chevron column and the full-width content panel.
+   */
+  expandable?: ExpandConfig<T>
 }
 
-export default function Table<T extends Record<string, unknown>> (props: TableProps<T>) {
+export default function Table<T extends object> (props: TableProps<T>) {
   const t = props.table
   // Observe the inner scroll container — contentRect.width excludes the vertical
   // scrollbar, preventing it from triggering a spurious horizontal scrollbar.
@@ -42,6 +48,7 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
 
   const stickyHeader = () => props.stickyHeader !== false
   const isLoading = () => props.loading?.() ?? false
+  const expW = () => (props.expandable ? EXPAND_COL_W : 0)
   const selW = () => (t.hasSelection ? SELECTION_COL_W : 0)
 
   const visibleColumns = createMemo(() =>
@@ -65,7 +72,7 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
   })
 
   const colWidthsPx = createMemo(() =>
-    computeColWidthsPx(orderedColumns(), containerW(), selW()),
+    computeColWidthsPx(orderedColumns(), containerW(), expW() + selW()),
   )
 
   // When columns overflow the container, tableWidthPx > containerW → triggers scroll
@@ -79,7 +86,7 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
     const cols = orderedColumns()
     const widths = colWidthsPx()
     const pins = t.pinnedKeys()
-    let acc = selW()
+    let acc = expW() + selW()
     for (let i = 0; i < cols.length; i++) {
       const col = cols[i]
       if (col.fixed !== 'left' && !pins.includes(col.key)) break
@@ -123,7 +130,7 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
     return offsets
   })
 
-  const colSpan = createMemo(() => orderedColumns().length + (t.hasSelection ? 1 : 0))
+  const colSpan = createMemo(() => orderedColumns().length + (t.hasSelection ? 1 : 0) + (props.expandable ? 1 : 0))
 
   // Title string of the current group-by column (for group header rows)
   const groupColTitle = createMemo(() => {
@@ -160,8 +167,13 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
     return ''
   }
 
-  const selStyle = (): JSX.CSSProperties => ({
+  const expStyle = (): JSX.CSSProperties => ({
     position: 'sticky', left: '0',
+    width: `${EXPAND_COL_W}px`, 'min-width': `${EXPAND_COL_W}px`,
+  })
+
+  const selStyle = (): JSX.CSSProperties => ({
+    position: 'sticky', left: `${expW()}px`,
     width: `${SELECTION_COL_W}px`, 'min-width': `${SELECTION_COL_W}px`,
     ...(!lastPinnedKey() ? { 'box-shadow': '2px 0 5px -2px rgba(0,0,0,0.15)' } : {}),
   })
@@ -174,6 +186,9 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
 
           <thead class={classNames(isLoading() && 'pointer-events-none')}>
             <tr class={classNames('bg-c-table-header-bg text-c-table-header-text', stickyHeader() && 'sticky top-0 z-sticky')}>
+              <Show when={props.expandable}>
+                <th class="px-2 py-3 w-10 bg-c-table-header-bg z-overlay" style={expStyle()} />
+              </Show>
               <Show when={t.hasSelection}>
                 <th class="px-3 py-3 bg-c-table-header-bg z-overlay" style={selStyle()}>
                   <Checkbox checked={t.isAllSelected()} indeterminate={t.isIndeterminate()} onChange={t.toggleSelectAll} />
@@ -247,8 +262,29 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
                     const { row, index } = item
                     const key = t.rowKey(row)
                     const isSelected = () => t.selectedKeys().includes(key)
+                    const isExpanded = () => props.expandable?.isExpanded(row) ?? false
+                    const canExpand = () => props.expandable?.isExpandable ? props.expandable.isExpandable(row) : !!props.expandable
                     return (
+                      <>
                       <tr class={classNames('border-t border-c-table-border transition-colors', isSelected() ? 'bg-c-table-row-selected-bg' : 'hover:bg-c-table-row-hover')}>
+                        <Show when={props.expandable}>
+                          <td
+                            class={classNames('p-0 z-focus cursor-pointer', isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface hover:bg-(--state-hover)')}
+                            style={expStyle()}
+                            onClick={(e) => { e.stopPropagation(); if (canExpand()) props.expandable!.onToggle(row) }}
+                          >
+                            <Show when={canExpand()}>
+                              <div class="w-full px-2 py-3.5 flex items-center justify-center">
+                                <span
+                                  class="inline-flex transition-transform duration-200"
+                                  style={{ transform: isExpanded() ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="var(--c-text-muted)"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+                                </span>
+                              </div>
+                            </Show>
+                          </td>
+                        </Show>
                         <Show when={t.hasSelection}>
                           <td class={classNames('px-3 py-3.5 z-focus', isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface')} style={selStyle()}>
                             <Checkbox checked={isSelected()} onChange={() => t.toggleSelect(key)} />
@@ -278,12 +314,21 @@ export default function Table<T extends Record<string, unknown>> (props: TablePr
                                 style={colStyle(col, i())}
                                 onClick={handleCellClick}
                               >
-                                {col.render ? col.render(row[col.key as keyof T & string], row, index) : String(row[col.key] ?? '')}
+                                {col.render ? col.render((row as Record<string, unknown>)[col.key] as T[keyof T & string], row, index) : String((row as Record<string, unknown>)[col.key] ?? '')}
                               </td>
                             )
                           }}
                         </For>
-                      </tr>
+                      </tr>                      <Show when={props.expandable && isExpanded()}>
+                        <tr class="border-t border-c-table-border">
+                          <td colspan={colSpan()} class="p-0">
+                            <div style={{ background: 'var(--c-bg)', 'border-left': '3px solid var(--md-primary)' }}>
+                              {props.expandable!.renderContent(row)}
+                            </div>
+                          </td>
+                        </tr>
+                      </Show>
+                      </>
                     )
                   }}
                 </For>

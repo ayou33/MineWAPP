@@ -1,6 +1,7 @@
 import type { ColumnDef } from './types'
 
 export const SELECTION_COL_W = 40
+export const EXPAND_COL_W = 40
 const MIN_UNIT_PX = 60
 const DEFAULT_COL_PX = 120
 
@@ -51,7 +52,7 @@ export function alignClass (align?: 'left' | 'center' | 'right'): string {
  * columns fall back to their minimum widths, causing the table to overflow
  * and trigger horizontal scrolling.
  */
-export function computeColWidthsPx<T extends Record<string, unknown>> (
+export function computeColWidthsPx<T extends object> (
   cols: ColumnDef<T>[],
   containerPx: number,
   selWidth: number,
