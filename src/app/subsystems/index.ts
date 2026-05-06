@@ -3,7 +3,7 @@ export type { AppUser, Permission, AuthProvider, IAuthStrategy } from './Account
 export type { ConfigOptions } from './ConfigSubsystem'
 export type { GlobalModules, GlobalResponder } from './GlobalSubsystem'
 export type { ReportOptions, TrackEvent } from './ReportSubsystem'
-export type { ISocket, SocketMap, SocketHandler } from './SocketSubsystem'
+export type { SocketHandler, SocketOptions, HeartbeatOptions, ReconnectOptions } from './SocketSubsystem'
 
 export { AccountSubsystem } from './AccountSubsystem'
 export { BridgeSubsystem } from './bridge'

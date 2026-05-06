@@ -15,14 +15,14 @@
  *   3. The new subsystem is immediately accessible as `application.<key>`.
  */
 import { createApplication } from './AppCore'
-import { AccountSubsystem, BridgeSubsystem, ConfigSubsystem, GlobalSubsystem, NetworkSubsystem, ReportSubsystem } from '@/app/subsystems'
+import { AccountSubsystem, BridgeSubsystem, ConfigSubsystem, GlobalSubsystem, NetworkSubsystem, ReportSubsystem, SocketSubsystem } from '@/app/subsystems'
 
 export type { AppUser, AuthProvider, IAuthStrategy, Permission } from './subsystems/AccountSubsystem'
 export type { ConfigOptions } from './subsystems/ConfigSubsystem'
 export type { GlobalResponder } from './subsystems/GlobalSubsystem'
 export type { ReportOptions } from './subsystems/ReportSubsystem'
 export type { ApplicationInstance } from './AppCore'
-export type { ISocket, SocketState } from './subsystems/SocketSubsystem'
+export type { SocketState, SocketOptions, HeartbeatOptions, ReconnectOptions } from './subsystems/SocketSubsystem'
 export type { AppContext } from './types'
 
 // Instantiate subsystems that have inter-references before passing to createApplication,
@@ -61,17 +61,13 @@ const application = createApplication({
   }),
 
   // ── Socket connections ─────────────────────────────────────────────────────
-  // Uncomment and pass your ISocket adapter(s) to enable.
-  // autoConnect defaults to false — call connect() manually after login.
+  // The subsystem starts empty. Add connections at runtime via add(), e.g.
+  // after the user logs in:
   //
-  // Single connection (name defaults to 'main'):
-  //   socket: new SocketSubsystem(new MySocketAdapter('wss://example.com')),
+  //   application.socket.add('wss://example.com')
+  //   application.socket.add({ url: 'wss://example.com/trade', name: 'trade' })
   //
-  // Multiple named connections:
-  //   socket: new SocketSubsystem({
-  //     main:  new MySocketAdapter('wss://example.com/chat'),
-  //     trade: new MySocketAdapter('wss://example.com/trade'),
-  //   }),
+  socket: new SocketSubsystem(),
 })
 
 export default application
