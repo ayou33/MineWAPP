@@ -266,12 +266,18 @@ export default function Table<T extends object> (props: TableProps<T>) {
                     const canExpand = () => props.expandable?.isExpandable ? props.expandable.isExpandable(row) : !!props.expandable
                     return (
                       <>
-                      <tr class={classNames('border-t border-c-table-border transition-colors', isSelected() ? 'bg-c-table-row-selected-bg' : 'hover:bg-c-table-row-hover')}>
+                      <tr
+                        class={classNames(
+                          'border-t border-c-table-border transition-colors group',
+                          isSelected() ? 'bg-c-table-row-selected-bg' : 'hover:bg-c-table-row-hover',
+                          props.expandable && canExpand() && 'cursor-pointer',
+                        )}
+                        onClick={props.expandable && canExpand() ? () => props.expandable!.onToggle(row) : undefined}
+                      >
                         <Show when={props.expandable}>
                           <td
-                            class={classNames('p-0 z-focus cursor-pointer', isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface hover:bg-(--state-hover)')}
+                            class={classNames('p-0 z-focus transition-colors', isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface group-hover:bg-c-table-row-hover')}
                             style={expStyle()}
-                            onClick={(e) => { e.stopPropagation(); if (canExpand()) props.expandable!.onToggle(row) }}
                           >
                             <Show when={canExpand()}>
                               <div class="w-full px-2 py-3.5 flex items-center justify-center">
@@ -305,14 +311,15 @@ export default function Table<T extends object> (props: TableProps<T>) {
                             return (
                               <td
                                 class={classNames(
-                                  'px-5 py-3.5 cursor-default transition-colors',
+                                  'px-5 py-3.5 transition-colors',
+                                  !props.expandable && 'cursor-default',
                                   alignClass(col.align), colZClass(col, false),
                                   (col.fixed === 'left' || col.fixed === 'right' || col.isAction || t.pinnedKeys().includes(col.key))
                                     && (isSelected() ? 'bg-c-table-row-selected-bg' : 'bg-c-surface'),
-                                  isCellActive() && 'ring-2 ring-inset ring-md-primary',
+                                  !props.expandable && isCellActive() && 'ring-2 ring-inset ring-md-primary',
                                 )}
                                 style={colStyle(col, i())}
-                                onClick={handleCellClick}
+                                onClick={props.expandable ? undefined : handleCellClick}
                               >
                                 {col.render ? col.render((row as Record<string, unknown>)[col.key] as T[keyof T & string], row, index) : String((row as Record<string, unknown>)[col.key] ?? '')}
                               </td>
