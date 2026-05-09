@@ -37,6 +37,7 @@ export default function Table<T extends object> (props: TableProps<T>) {
   // scrollbar, preventing it from triggering a spurious horizontal scrollbar.
   let scrollEl: HTMLDivElement | null = null
   const [containerW, setContainerW] = createSignal(0)
+  const [colWidthOverrides, setColWidthOverrides] = createSignal<Map<string, number>>(new Map())
 
   onMount(() => {
     if (!scrollEl) return
@@ -71,9 +72,13 @@ export default function Table<T extends object> (props: TableProps<T>) {
     ]
   })
 
-  const colWidthsPx = createMemo(() =>
-    computeColWidthsPx(orderedColumns(), containerW(), expW() + selW()),
-  )
+  const colWidthsPx = createMemo(() => {
+    const base = computeColWidthsPx(orderedColumns(), containerW(), expW() + selW())
+    const overrides = colWidthOverrides()
+    if (!overrides.size) return base
+    const cols = orderedColumns()
+    return base.map((w, i) => overrides.get(cols[i].key) ?? w)
+  })
 
   // When columns overflow the container, tableWidthPx > containerW → triggers scroll
   const tableWidthPx = createMemo(() =>
@@ -131,6 +136,35 @@ export default function Table<T extends object> (props: TableProps<T>) {
   })
 
   const colSpan = createMemo(() => orderedColumns().length + (t.hasSelection ? 1 : 0) + (props.expandable ? 1 : 0))
+
+  // ── Column resize ───────────────────────────────────────────────────────
+  const MIN_RESIZE_W = 60
+  let _cleanupResize: (() => void) | null = null
+
+  function startResize (e: MouseEvent, colKey: string, currentWidth: number) {
+    e.preventDefault()
+    e.stopPropagation()
+    const startX = e.clientX
+    const startW = currentWidth
+    const onMove = (ev: MouseEvent) => {
+      const newW = Math.max(MIN_RESIZE_W, startW + ev.clientX - startX)
+      setColWidthOverrides(prev => new Map(prev).set(colKey, newW))
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+      _cleanupResize = null
+    }
+    _cleanupResize = onUp
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = 'col-resize'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }
+
+  onCleanup(() => { _cleanupResize?.() })
 
   // Title string of the current group-by column (for group header rows)
   const groupColTitle = createMemo(() => {
@@ -202,7 +236,7 @@ export default function Table<T extends object> (props: TableProps<T>) {
                   return (
                     <th
                       class={classNames(
-                        'px-4 py-3 font-semibold text-xs whitespace-nowrap bg-c-table-header-bg group',
+                        'relative px-4 py-3 font-semibold text-xs whitespace-nowrap bg-c-table-header-bg group',
                         alignClass(col.align), colZClass(col, true),
                       )}
                       style={{ ...colStyle(col, i()), color: 'var(--c-text-muted)' }}
@@ -224,6 +258,14 @@ export default function Table<T extends object> (props: TableProps<T>) {
                         }>
                           <DataColHeaderMenu col={col} table={t} />
                         </Show>
+                      </div>
+                      {/* Resize handle */}
+                      <div
+                        class="absolute right-0 top-0 bottom-0 w-4 flex items-center justify-center cursor-col-resize opacity-0 group-hover:opacity-100 hover:!opacity-100 transition-opacity select-none z-focus"
+                        onMouseDown={(e) => startResize(e, col.key, colWidthsPx()[i()])}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div class="w-1 h-2/5 rounded-full" style={{ background: 'var(--md-outline-variant)' }} />
                       </div>
                     </th>
                   )
