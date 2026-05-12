@@ -1,0 +1,141 @@
+/* ─── Quill Snow theme overrides — MD3 design tokens ─────────────────────── */
+
+.richtext-editor .ql-toolbar.ql-snow {
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-input-outlined-border);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 6px 10px;
+  transition: border-color 0.15s;
+}
+
+.richtext-editor .ql-container.ql-snow {
+  background: var(--c-input-outlined-bg);
+  border: 1px solid var(--c-input-outlined-border);
+  border-radius: 0 0 12px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.richtext-editor .ql-container.ql-snow:focus-within {
+  border-color: var(--c-input-outlined-border-focus);
+  box-shadow: 0 0 0 3px var(--state-focus);
+}
+
+.richtext-editor.rte-error .ql-toolbar.ql-snow,
+.richtext-editor.rte-error .ql-container.ql-snow {
+  border-color: var(--c-input-outlined-border-error);
+}
+
+.richtext-editor .ql-editor {
+  color: var(--c-text);
+  min-height: var(--rte-min-height, 160px);
+  padding: 12px 16px;
+  line-height: 1.7;
+}
+
+.richtext-editor .ql-editor.ql-blank::before {
+  color: var(--c-input-placeholder);
+  font-style: normal;
+  left: 16px;
+  right: 16px;
+}
+
+/* ─── Toolbar icons ────────────────────────────────────────────────────────── */
+.richtext-editor .ql-snow .ql-stroke {
+  stroke: var(--c-text-muted);
+}
+
+.richtext-editor .ql-snow .ql-fill,
+.richtext-editor .ql-snow .ql-stroke.ql-fill {
+  fill: var(--c-text-muted);
+}
+
+.richtext-editor .ql-snow .ql-picker {
+  color: var(--c-text-muted);
+}
+
+.richtext-editor .ql-snow .ql-picker-label {
+  border-color: transparent;
+}
+
+/* Active / hover */
+.richtext-editor .ql-snow.ql-toolbar button:hover .ql-stroke,
+.richtext-editor .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.richtext-editor .ql-snow .ql-toolbar button:hover .ql-stroke,
+.richtext-editor .ql-snow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--md-primary);
+}
+
+.richtext-editor .ql-snow.ql-toolbar button:hover .ql-fill,
+.richtext-editor .ql-snow.ql-toolbar button.ql-active .ql-fill,
+.richtext-editor .ql-snow .ql-toolbar button:hover .ql-fill,
+.richtext-editor .ql-snow .ql-toolbar button.ql-active .ql-fill {
+  fill: var(--md-primary);
+}
+
+.richtext-editor .ql-snow .ql-picker-label:hover,
+.richtext-editor .ql-snow .ql-picker-label.ql-active {
+  color: var(--md-primary);
+}
+
+.richtext-editor .ql-snow .ql-picker-label:hover .ql-stroke,
+.richtext-editor .ql-snow .ql-picker-label.ql-active .ql-stroke {
+  stroke: var(--md-primary);
+}
+
+/* Picker dropdown panel */
+.richtext-editor .ql-snow .ql-picker-options {
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-input-outlined-border);
+  border-radius: 8px;
+  box-shadow: var(--md-shadow-sm, 0 2px 8px rgba(0,0,0,.12));
+  padding: 4px 0;
+}
+
+.richtext-editor .ql-snow .ql-picker-options .ql-picker-item:hover,
+.richtext-editor .ql-snow .ql-picker-options .ql-picker-item.ql-selected {
+  color: var(--md-primary);
+  background: var(--state-hover);
+}
+
+/* Tooltip (link) */
+.richtext-editor .ql-snow .ql-tooltip {
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-input-outlined-border);
+  border-radius: 8px;
+  box-shadow: var(--md-shadow-sm, 0 2px 8px rgba(0,0,0,.12));
+  color: var(--c-text);
+  z-index: var(--z-index-dropdown);
+}
+
+.richtext-editor .ql-snow .ql-tooltip input[type=text] {
+  background: var(--c-input-outlined-bg);
+  border: 1px solid var(--c-input-outlined-border);
+  border-radius: 6px;
+  color: var(--c-text);
+  outline: none;
+  padding: 4px 8px;
+}
+
+.richtext-editor .ql-snow .ql-tooltip input[type=text]:focus {
+  border-color: var(--c-input-outlined-border-focus);
+  box-shadow: 0 0 0 3px var(--state-focus);
+}
+
+.richtext-editor .ql-snow .ql-tooltip a {
+  color: var(--md-primary);
+}
+
+/* ─── Disabled state ───────────────────────────────────────────────────────── */
+.richtext-editor.rte-disabled .ql-toolbar.ql-snow {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.richtext-editor.rte-disabled .ql-editor {
+  background: var(--c-btn-disabled-bg, var(--c-surface-1));
+  opacity: 0.7;
+  cursor: not-allowed;
+}
