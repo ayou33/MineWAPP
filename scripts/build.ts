@@ -7,8 +7,9 @@
  * @Description:
  */
 import { execa } from 'execa'
+import { existsSync } from 'node:fs'
 import { env, pkg, nodeEnv } from './parseArgs'
-import { logSection, logStep, logOk, logErr, logInfo } from './logger'
+import { logSection, logStep, logOk, logErr, logInfo, logWarn } from './logger'
 
 logSection('Build')
 logInfo(`Package:     ${pkg}`)
@@ -49,9 +50,13 @@ try {
   await execa('pnpm', ['zip-worker'], { stdio: 'inherit' })
   logOk('zip-worker complete.')
 
-  // 3. Execute deploy script
+  // 3. Execute deploy script (optional — skipped when scripts/deploy.ts is missing)
   logStep(3, 3, `Running deploy for ${env}...`)
-  await execa('tsx', ['scripts/deploy.ts', `--${pkg}${env}`], { stdio: 'inherit' })
+  if (existsSync('scripts/deploy.ts')) {
+    await execa('tsx', ['scripts/deploy.ts', `--${pkg}${env}`], { stdio: 'inherit' })
+  } else {
+    logWarn('scripts/deploy.ts not found — skipping deploy step.')
+  }
 
 } catch (error) {
   logErr('Build failed.')

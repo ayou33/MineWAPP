@@ -64,7 +64,7 @@ function Popover (props: PopoverProps) {
 
 // ── Menu section helpers ───────────────────────────────────────────────────────
 
-function SectionLabel (props: { label: string }) {
+function SectionLabel (props: { label: JSXElement }) {
   return <div class="px-3 pt-2.5 pb-1 text-xs font-medium" style={{ color: 'var(--c-text-muted)' }}>{props.label}</div>
 }
 

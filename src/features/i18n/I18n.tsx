@@ -1,6 +1,7 @@
 import { logFor } from '@/common/log'
 import { brand } from '@/config'
 import { fallback, t, te } from '@/features/i18n/index'
+import type { JSX } from 'solid-js'
 import { mergeProps, ParentProps, splitProps, ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 
@@ -38,15 +39,17 @@ export default function I18n (props: I18nProps) {
   log('i18n render', local.args)
   
   function render () {
-    let textContent: string = te(local.path) ? t(local.path, local.args) : (fallback(local.path, local.args!) ?? local.children ?? local.path)
-    
+    let textContent: string | JSX.Element = te(local.path)
+      ? t(local.path, local.args)
+      : (fallback(local.path, local.args!) ?? local.children ?? local.path)
+
     if (local.multiline) {
-      textContent = textContent.split(local.eol).map(line => `${line}<br />`).join('')
+      textContent = String(textContent).split(local.eol).map(line => `${line}<br />`).join('')
     }
-    
+
     return {
       children: textContent,
-      innerHTML: useHTMLContent ? textContent : undefined,
+      innerHTML: useHTMLContent ? String(textContent) : undefined,
     }
   }
   

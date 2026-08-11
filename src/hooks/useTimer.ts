@@ -28,7 +28,7 @@ export default function useTimer () {
     const [fn, ms, ...rest] = args
     const id = window.setTimeout(() => {
       clocks.splice(clocks.indexOf(id), ONE)
-      fn(...rest)
+      ;(fn as AnyFn)(...rest)
     }, ms)
     clocks.push(id)
     return id

@@ -84,7 +84,6 @@ export default function FormPopup (props: FormPopupProps) {
           <Button
             class="px-5 py-2 rounded-xl text-sm font-medium border-0 cursor-pointer"
             style={{ background: 'var(--md-primary)', color: 'var(--md-on-primary)' }}
-            confirmable={false}
             disabled={props.disabled}
             onClick={props.onConfirm}
           >

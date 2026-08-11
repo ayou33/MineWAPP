@@ -3,16 +3,16 @@
  * Author: 阿佑[ayooooo@petalmail.com]
  * Date: 2024/7/23 16:18
  */
-import { useNavigate } from '@solidjs/router'
+import { NavigateOptions, useNavigate } from '@solidjs/router'
 
 export function useForwardNavigate () {
   const navigate = useNavigate()
 
-  return (href: string, options?: Parameters<typeof navigate>[1]) => navigate(href, {
+  return (href: string, options?: Partial<NavigateOptions>) => navigate(href, {
     ...options,
     state: {
-      ...options?.state ?? {},
+      ...(options?.state as object | undefined),
       forward: true,
     },
-  } as never)
+  })
 }

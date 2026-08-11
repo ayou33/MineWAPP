@@ -15,6 +15,7 @@ type ButtonProps = Partial<{
   style: Data<string | number>;
   loading: Accessor<boolean>;
   disabled: boolean;
+  type: 'button' | 'submit' | 'reset';
   onClick: (e: MouseEvent) => void;
 }> & ParentProps
 
@@ -22,7 +23,7 @@ const MIN_LOADING_TIME = 500
 
 export default function Button (props: ButtonProps) {
   const [local, others] = splitProps(props, [
-    'children', 'class', 'spinClass', 'loading', 'onClick'
+    'children', 'class', 'spinClass', 'loading', 'onClick', 'type'
   ])
   const [loading, setLoading] = createSignal(false)
   const { delay } = useTimer()
@@ -52,11 +53,13 @@ export default function Button (props: ButtonProps) {
     }
   }
   
+  const buttonProps = { ...others, type: local.type ?? 'button' }
+
   return (
     <Touchable.button
       class={classNames(local.class)}
       onTap={onClick}
-      {...others}
+      {...buttonProps}
     >
       <Show when={loading() ?? false} fallback={local.children}><Spin class={classNames(local.spinClass ?? 'border-white')} /></Show>
     </Touchable.button>

@@ -31,7 +31,7 @@ export default function usePageContext (): ScopedPageProps {
       delay,
       on (...args: Parameters<typeof on>) {
         const off = on(...args)
-        listeners.push(on(...args))
+        listeners.push(off)
         return off
       },
       emit,

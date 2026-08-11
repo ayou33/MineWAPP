@@ -16,7 +16,7 @@ export type ScrollProps = InheritProps<FlowProps & {
   onBottomTouched?: () => void;
   loading?: boolean;
   locked?: boolean;
-  ref?: HTMLDivElement;
+  ref?: (el: HTMLDivElement) => void
 }>
 
 const scrollPositionMap: Record<string, number> = {}
@@ -60,11 +60,7 @@ export default function Scroller (props: ScrollProps) {
 
   function setRef (el: HTMLDivElement) {
     scroller = el
-    if ('function' === typeof props.ref) {
-      props.ref(el)
-    } else if (props.ref) {
-      (props.ref as HTMLDivElement) = el
-    }
+    props.ref?.(el)
   }
   
   return (
@@ -72,7 +68,7 @@ export default function Scroller (props: ScrollProps) {
       ref={setRef}
       class={classNames(props.locked ? '': 'overflow-y-auto', props.class)}
       style={props.style}
-      data-srcoll-id={id}
+      data-scroll-id={id}
     >
       {props.children}
       <Show when={ps.loading}>

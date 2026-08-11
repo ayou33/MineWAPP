@@ -14,6 +14,14 @@ import { createStore } from 'solid-js/store'
 
 type SourceFn = (local: Locale) => ApiPath
 
+/**
+ * Loose translator shape used by `t` / `fallback`.
+ * The primitive's generic path typing is too strict for runtime-flexible flat
+ * dictionaries, so we narrow it at the boundary (the underlying behaviour is
+ * unchanged — it is still the same `translator` call at runtime).
+ */
+type Translate = (path: string, mix?: Record<string, unknown> | string) => string | undefined
+
 const loadedSource: Array<[SourceFn, string | undefined]> = []
 
 const [dictionaries, setDictionaries] = createStore<{ [p in Locale]?: Dictionary }>({
@@ -23,11 +31,13 @@ const [dictionaries, setDictionaries] = createStore<{ [p in Locale]?: Dictionary
 const dict = createMemo<Dictionary>(() => dictionaries[application.locale() as Locale] ?? dictionaries[fallbackLocale] as Dictionary)
 
 export function t (path: string, mix?: Record<string, unknown> | string, dftTxt?: string) {
-  return translator(dict, templateResolver)(path, mix) ?? ('string' === typeof mix ? mix : (dftTxt ?? path))
+  const translate = translator(dict, templateResolver) as unknown as Translate
+  return translate(path, mix) ?? ('string' === typeof mix ? mix : (dftTxt ?? path))
 }
 
 export function fallback (path: string, args: Record<string, unknown>) {
-  return translator(() => dictionaries[fallbackLocale], templateResolver)(path, args)
+  const translate = translator(() => dictionaries[fallbackLocale], templateResolver) as unknown as Translate
+  return translate(path, args)
 }
 
 export function te (path: string): boolean {
@@ -49,17 +59,28 @@ function requestLanguage (path: ApiPath) {
 }
 
 async function loadLanguage (source: SourceFn, lang: Locale, mix?: string | (() => void)) {
-  let resp = await requestLanguage(source(lang))
-    .catch(async () => {
-      setLocale('en-US')
-      resp = await requestLanguage(source('en-US'))
-    })
-  
+  let resp: Data<string | number> | undefined
+
+  try {
+    resp = await requestLanguage(source(lang))
+  } catch {
+    // Never fall back recursively: if the fallback locale itself fails to load,
+    // give up and keep whatever dictionary is already registered.
+    if (lang === fallbackLocale) {
+      console.warn(`[i18n] Failed to load fallback locale "${lang}"`)
+      return
+    }
+    // Switch the whole app to the fallback locale. setLocale() re-loads all
+    // registered sources for the fallback, so there is no double fetch here.
+    await setLocale(fallbackLocale)
+    return
+  }
+
   setDictionaries(lang, prev => flatten({
     ...prev,
     ...('string' === typeof mix ? { [mix]: resp } : resp),
   }))
-  
+
   if ('function' === typeof mix) mix()
 }
 
@@ -71,8 +92,11 @@ export function loadLang (source: SourceFn, moduleOrFn?: string | (() => void)):
   loadLanguage(source, lang, moduleOrFn)
   
   if ('string' === typeof moduleOrFn) {
-    return scopedTranslator(translator(dict, templateResolver), moduleOrFn) as unknown as Translator<Dictionary, string>
+    // The scope is a free-form runtime string; keep the strict typing out of the
+    // call and cast the result to the declared return type.
+    const base = translator(dict, templateResolver) as unknown as (path: string, mix?: unknown) => string
+    return scopedTranslator(base as never, moduleOrFn as never) as unknown as Translator<Dictionary, string>
   }
   
-  return translator(dict, templateResolver)
+  return translator(dict, templateResolver) as unknown as Translator<Dictionary, string>
 }

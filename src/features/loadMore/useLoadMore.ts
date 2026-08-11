@@ -111,12 +111,10 @@ export default function useLoadMore<
         }
         
         const removedIds = R.map(uniq, removed)
-        const freshKeyMap: Record<string, number> = R.reduce((acc, it: D) => {
-          return {
-            [uniq(it) as string]: acc.total,
-            total: acc.total + ONE,
-          }
-        }, { total: 0 }, fresh)
+        const freshKeyMap: Record<string, number> = {}
+        fresh.forEach((it: D, idx: number) => {
+          freshKeyMap[String(uniq(it))] = idx
+        })
         
         for (let i = 0, l = exist.length; i < l; i++) {
           const it = exist[i]

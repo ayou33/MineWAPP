@@ -28,7 +28,7 @@ export default function useBack () {
         ...location.state?.options,
         state: {
           forward: true,
-          ...location.state?.options?.state,
+          ...(location.state?.options?.state as object | undefined),
         }
       })
     } else {
