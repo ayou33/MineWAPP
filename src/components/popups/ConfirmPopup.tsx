@@ -13,6 +13,9 @@ export type ConfirmPopupProps = PopupProps<{
 export default function ConfirmPopup (props: ConfirmPopupProps) {
   const confirmColor = () => props.confirmColor ?? 'var(--md-error)'
   const confirmLabel = () => props.confirmLabel ?? '确认'
+  // Custom colors can't derive a foreground token, so white is kept for them;
+  // the default --md-error background uses the proper on-error token (dark-aware).
+  const confirmText = () => props.confirmColor ? '#fff' : 'var(--md-on-error)'
 
   return (
     <div class="flex flex-col gap-5 min-w-80">
@@ -50,7 +53,7 @@ export default function ConfirmPopup (props: ConfirmPopupProps) {
         <button
           type="button"
           class="flex-1 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-opacity hover:opacity-90 border-0"
-          style={{ background: confirmColor(), color: '#fff' }}
+          style={{ background: confirmColor(), color: confirmText() }}
           onClick={() => props.close(true)}
         >
           {confirmLabel()}

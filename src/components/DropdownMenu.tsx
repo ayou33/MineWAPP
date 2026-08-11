@@ -184,7 +184,7 @@ export default function DropdownMenu (rawProps: Props) {
                         it.disabled
                           ? 'opacity-40 cursor-not-allowed text-c-text-muted'
                           : it.danger
-                            ? 'cursor-pointer text-md-error hover:bg-[rgba(246,77,75,0.10)]'
+                            ? 'cursor-pointer text-md-error hover:bg-c-menu-item-danger-hover'
                             : 'cursor-pointer text-c-text hover:bg-c-menu-item-hover',
                       )}
                       onClick={(e) => pick(it, e)}

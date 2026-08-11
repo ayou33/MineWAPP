@@ -36,7 +36,7 @@ function useColors (colors: string[] = []) {
   
   return () => {
     if (!usedColors[i]) {
-      usedColors[i] = usedColors[Math.max(ZERO, i - ONE)] ?? '#F64D4B'
+      usedColors[i] = usedColors[Math.max(ZERO, i - ONE)] ?? 'var(--md-error)'
     }
     
     return usedColors[i++]

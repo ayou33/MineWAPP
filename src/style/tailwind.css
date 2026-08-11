@@ -6,24 +6,24 @@
   --color-theme-secondary: var(--theme-secondary);
   --color-theme-accent: var(--theme-accent);
 
-  --color-black: #201F29;
-  --color-gray: #585666;
-  --color-gray-light: #9494A4;
-  --color-gray-lighter: #B1B1CC;
-  --color-bg: #FAF9FF;
-  --color-blue: #2E60F9;
+  --color-black: var(--md-on-background);
+  --color-gray: var(--c-text-muted);
+  --color-gray-light: var(--c-text-subtle);
+  --color-gray-lighter: var(--c-text-disabled);
+  --color-bg: var(--md-background);
+  --color-blue: var(--md-primary);
   --color-blue-darker: #1C4CDD;
   --color-blue-lighter: #517BFF;
   --color-blue-2lighter: #7098F8;
   --color-blue-3lighter: #E2EAFE;
-  --color-green: #00C58A;
+  --color-green: var(--md-success);
   --color-green-darker: #15AB67;
-  --color-orange: #FF9100;
+  --color-orange: var(--md-warning);
   --color-orange-lighter: #FFAD00;
-  --color-red: #F64D4B;
+  --color-red: var(--md-error);
   --color-red-darker: #D52A27;
   --color-red-lighter: #F98281;
-  --color-purple: #9600D2;
+  --color-purple: var(--md-tertiary);
   --color-purple-lighter: #BA2AF3;
 
   /* z-index — legacy (backward compat, keeps existing z-system / z-popup / z-focus classes) */
@@ -193,6 +193,7 @@
   --color-c-menu-item-active-bg:   var(--c-menu-item-active-bg);
   --color-c-menu-item-active-text: var(--c-menu-item-active-text);
   --color-c-menu-divider:          var(--c-menu-divider);
+  --color-c-menu-item-danger-hover: var(--c-menu-item-danger-hover);
 
   /* Tab */
   --color-c-tab-indicator:     var(--c-tab-indicator);

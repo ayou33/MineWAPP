@@ -188,6 +188,7 @@
   --c-input-outlined-border:        var(--md-outline);
   --c-input-outlined-border-focus:  var(--md-primary);
   --c-input-outlined-border-error:  var(--md-error);
+  --c-input-outlined-shadow-error: 0 0 0 3px color-mix(in srgb, var(--md-error) 15%, transparent);
 
   /* — Select / Dropdown / Combobox — */
   --c-dropdown-bg:               var(--md-surface);
@@ -233,6 +234,7 @@
   --c-menu-item-active-bg:   var(--md-primary-container);
   --c-menu-item-active-text: var(--md-on-primary-container);
   --c-menu-divider:          var(--md-outline-variant);
+  --c-menu-item-danger-hover: color-mix(in srgb, var(--md-error) 10%, transparent);
 
   /* — Tabs — */
   --c-tab-indicator:    var(--md-primary);

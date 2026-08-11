@@ -39,13 +39,23 @@ export default function Tip ({ children, onComplete, option }: ParentProps<TipPr
         'w-full',
       ] // top
 
-  const background = option.type === TipType.SUCCESS
-    ? 'bg-[#097897]/90'
-    : option.type === TipType.ERROR
-      ? 'bg-red-darker/90'
-      : option.type === TipType.WARNING
-        ? 'bg-orange-lighter/90'
-        : 'bg-black/90' // info
+  // Background/text derive from the --c-tip-* semantic tokens so toast
+  // colours follow the active theme (and dark mode). 90% opacity keeps the
+  // historical look while staying token-driven.
+  const tipStyle = (): { background: string; color: string } => {
+    const [bg, text] = option.type === TipType.SUCCESS
+      ? ['var(--c-tip-success-bg)', 'var(--c-tip-success-text)']
+      : option.type === TipType.ERROR
+        ? ['var(--c-tip-error-bg)', 'var(--c-tip-error-text)']
+        : option.type === TipType.WARNING
+          ? ['var(--c-tip-warning-bg)', 'var(--c-tip-warning-text)']
+          : ['var(--c-tip-info-bg)', 'var(--c-tip-info-text)'] // info
+
+    return {
+      background: `color-mix(in srgb, ${bg} 90%, transparent)`,
+      color: text,
+    }
+  }
 
   const animClass = isTop ? 'tip-slide-down' : isCenter ? 'tip-scale' : 'tip-slide-up'
 
@@ -133,7 +143,7 @@ export default function Tip ({ children, onComplete, option }: ParentProps<TipPr
     style={isTop && offsetY() !== 0 ? { transform: `translateY(${offsetY()}px)` } : undefined}
     {...swipeHandlers}
   >
-    <div class={classNames('text-white rounded-xl p-4 supports-[backdrop-filter]:backdrop-blur-sm', background, innerLayout)}>
+    <div class={classNames('rounded-xl p-4 supports-[backdrop-filter]:backdrop-blur-sm', innerLayout)} style={tipStyle()}>
       {children}
     </div>
   </div>

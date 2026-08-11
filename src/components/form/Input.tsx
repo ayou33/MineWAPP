@@ -42,7 +42,7 @@ export default function Input (props: InputProps) {
   const hasError = () => Boolean(local.error)
 
   const borderClass = () => hasError()
-    ? 'border-[var(--c-input-outlined-border-error)] focus:border-[var(--c-input-outlined-border-error)] focus:shadow-[0_0_0_3px_rgba(246,77,75,0.15)]'
+    ? 'border-[var(--c-input-outlined-border-error)] focus:border-[var(--c-input-outlined-border-error)] focus:shadow-[var(--c-input-outlined-shadow-error)]'
     : 'border-[var(--c-input-outlined-border)] focus:border-[var(--c-input-outlined-border-focus)] focus:shadow-[0_0_0_3px_var(--state-focus)]'
 
   const paddingClass = () => {

@@ -80,7 +80,7 @@ export default function DropdownSelect<V extends string = string> (props: Props<
         : 'var(--c-input-outlined-border)',
     'box-shadow': open()
       ? hasError()
-        ? '0 0 0 3px rgba(246,77,75,0.15)'
+        ? 'var(--c-input-outlined-shadow-error)'
         : '0 0 0 3px var(--state-focus)'
       : 'none',
   })
